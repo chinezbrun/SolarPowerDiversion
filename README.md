@@ -1,7 +1,7 @@
 # SolarPowerDiversion
 
 This software package maximize usage of available solar power in a Outback power hybrid solar system.
-Necesary hardware configuration is described in my project https://hackaday.io/project/162995-solar-power-diverter-outback-power
+Necesary hardware configuration is described in my project https://hackaday.io/project/162995-solar-power-diverter-outback-power.  
 Modbus communication with MATE3/MATE3s was done base on https://github.com/basrijn/Outback_Mate3 -- Thanks Bas!
 
 ## How does this software work?
