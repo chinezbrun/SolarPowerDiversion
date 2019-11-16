@@ -1,54 +1,49 @@
 # SolarPowerDiversion
 
-This software package maximize usage of available solar power in a Outback power hybrid solar system.
-Necesary hardware configuration is described in my project https://hackaday.io/project/162995-solar-power-diverter-outback-power.  
-Modbus communication with MATE3/MATE3s was done base on https://github.com/basrijn/Outback_Mate3 -- Thanks Bas!
+This software is used to maximize usage of available solar power in a Outback Power hybrid solar system.
+Full project and necessary hardware configuration is described here: https://hackaday.io/project/162995-solar-power-diverter-outback-power.  
+Modbus communication with MATE3/MATE3s was done base on initial idea of Bas: https://github.com/basrijn/Outback_Mate3 
 
 ## How does this software work?
 
 The software is divided in two parts:
 
-- Python script for query MATE3/MATE3S using ModBus protocol,registering the data in the database and query’s.
-- PHP/HTML/JavaScript webpage for visual representation.
+- PowerDiversion: Python based - the core part, that process input data from MATE3 and push the output on Rapberry PI GPIO
+- PredictiveData: Python based - an add-on to further improve power gathering by sending command to MATE3, change some parameters based on seasonality, weather prediction
 
-ReadMateStatusModBus.py
-===========
-Query MATE3/MATE3S and gets data, format, register in the database and returns a json file that is used for display current status.
-ReadMateStatusModBus.py script is running once every X minute -- task should be created (windows or Linux)
-ReadMateStatusModBus.cfg is the config file for this script
+### PowerDiversion/PowerDiversion.py
+Runs on Raspberry PI and gets MATE3 critical data trough a JSON file.
+Based on input data analysis, GPIO output are used to activate various AC loads via 5V relays.
+PowerDiversion.py script is running once every X minute -- task should be created on Raspberry.
+The JSON file used as input, is produced by MonitorMate_ModBus: https://github.com/chinezbrun/MonitorMate_ModBus. 
+PowerDiversion and MonitorMate_ModBus were designed to be used together.
 
-ReadMateStatusModBus.sh (is not mandatory)
-===========
-Is an example of InitScript for ReadMateStatusModBus.py in LINUX.This script should run with minimum one minute frecvency .
-See your specific OS/distributions documentaiton for setting up daemons/tasks.
+PowerDiversion.cfg -- is the configuration file for this script and can be configured based on the needs.
+PowerDiversion.sh (is not mandatory) -- is an example of start-up script to run the code at reboot
 
-getstatus.php
-===========
-Gets data from database an returns a json string.
+### PredictiveData/ChangeMateStatusModBus.py
+This script is using ModBus protocol to read and WRITE parameters to MATE3.Can be installed on Raspberry or on any other host computer.
+ChangeMateStatusModBus.py is running once pe day (recommended) -- task should be created on Host computer.
+The main output of the script (current) is to adjust the schedule in MATE3 Flextime (Minigrid and Backup mode).
+These adjustments are based on simple input data like month or whether forecast and can be extended in future development
 
-monitormate.html / monitormate.js
-===========
-Visual representation of devices status and history. Works with getstatus.php for history and with matelog for “real time” status.
+ChangeMateStatusModBus.cfg -- is the configuration file for this script and can be configured based on the needs.
 
-config.php
-===========
-Configuration file. Contains database connection parameters, record interval(not used), security token(not used), time zone, and power system configuration.
+### PredictiveData/weather/weather_api.py
+This is the first add-on for PredictiveData and is meant to run API weather https://home.openweathermap.org/, save a JSON file with weather prediction,
+record record data in MariaDB in order to be used later on by ChangeMateStatusModBus.py
 
-Installation and Execution
-===========
+### Installation and Execution
+---PowerDiversion---
+1. Download SolarPowerDiversion and extract it. 
+2. Copy SolarPowerDivertion folder content in any Raspberry PI location (my case: /var/www/html/SolarPowerDiversion )
+3. Edit the PowerDiversion/PowerDiversion.cfg to your liking.
+4. Run PowerDiversion.py. i.e : /usr/bin/python3 /var/www/html/SolarPowerDiversion/PowerDiversion/PowerDiversion.py
+   Recommended to have the script to be run also at start-up.
+---PredictiveData----
+5. Use weather.sql to create database/tables in your MySQL database. (I suggest phpAdmin to import)
+6. Set a task in host computer to run weather_api.py every 3h
+7. Edit the PredictiveData/ChangeMateStatusModBus.cfg to your liking.
+8. Set a task in host computer to run PredictiveData/ChangeMateStatusModBus.py every day (preferably @ 21:30)
 
-1. Download MonitorMate_ModBus and extract it.
-2. Rename the config file to config.php (remove .sample)
-2. Edit the config file to your liking.
-3. Create the database manually, and a new database user if necessary.
-4. Use database.sql to create tables in your MySQL database. (I suggest phpAdmin to import)
-5. Copy the “WebServer” directory to your web server.
-6. Copy the "DataStreamRelay" directory to your host computer (if it's not the one you're using)
-7. Configure ReadMateStatusModBus.cfg
-8. Set a task in host computer to run ReadMateStatusModBus.py every "X" minute (TaskScheduler in Windows)
 
-ex Linux : /usr/local/bin/python3.6 /var/www/html/DataStreamRelay/ReadMateStatusModBus.py
-ex: windows: D:\xampp\python\python37\python.exe D:\DataStreamRelay\ReadMateStatusModBus.py
-depending on your paths
-
-Go to  http://www.YOURSERVER.com/index.php (maybe you have to wait a little depending your record interval.)
