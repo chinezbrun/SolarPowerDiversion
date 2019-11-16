@@ -39,7 +39,7 @@ record record data in MariaDB in order to be used later on by ChangeMateStatusMo
 2. Copy SolarPowerDivertion folder content in any Raspberry PI location (my case: /var/www/html/SolarPowerDiversion )
 3. Edit the PowerDiversion/PowerDiversion.cfg to your liking.
 4. Run PowerDiversion.py. i.e : /usr/bin/python3 /var/www/html/SolarPowerDiversion/PowerDiversion/PowerDiversion.py
-   Recommended to have the script to be run also at start-up.
+   Recommended to have the script to be run also at start-up. 
 ---PredictiveData----
 5. Use weather.sql to create database/tables in your MySQL database. (I suggest phpAdmin to import)
 6. Set a task in host computer to run weather_api.py every 3h
