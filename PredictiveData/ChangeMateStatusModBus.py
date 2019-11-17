@@ -8,7 +8,7 @@ from pymodbus.payload import BinaryPayloadDecoder
 from configparser import ConfigParser
 import sys, os
 
-script_ver = "0.4.20191103"
+script_ver = "0.4.20191117"
 print ("script version: "+ script_ver)
 
 pathname          = os.path.dirname(sys.argv[0])        
@@ -99,18 +99,18 @@ minigrid_start = [
     [3,10,10]]       # December
 
 backup_start = [
-    [15,15,13],      # January
-    [16,16,13],      # February
-    [16,16,13],      # March
-    [17,17,13],      # April
-    [17,17,13],      # May
-    [18,18,15],      # June
-    [18,18,15],      # July
-    [17,17,15],      # August
-    [17,17,13],      # September
-    [16,16,13],      # October
-    [16,16,13],      # November
-    [15,15,13]]      # December
+    [14,13,12],      # January
+    [15,14,12],      # February
+    [16,15,12],      # March
+    [17,16,13],      # April
+    [18,17,13],      # May
+    [19,18,15],      # June
+    [19,18,15],      # July
+    [18,17,15],      # August
+    [17,16,13],      # September
+    [16,15,13],      # October
+    [15,14,12],      # November
+    [14,13,12]]      # December
 
 # Subroutines
 # Read SunSpec Header with logic from pymodbus example
@@ -346,12 +346,12 @@ while True:
                 OutBack_Sched_1_AC_Mode_Hour = response.registers[0]
                 response = client.read_holding_registers(reg + 411, 1)
                 OutBack_Sched_1_AC_Mode_Minute = response.registers[0]
-                logging.info(".... Outback schedule_1 [h:mm] " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " +str(Sched_1_AC_Mode))
+                logging.info(".... Outback sch1 [h:mm] " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " +str(Sched_1_AC_Mode))
                 
                 if auto_scheduling =="true" and OutBack_Sched_1_AC_Mode != OutBack_Sched_1_AC_Mode_WT:
                     rw = client.write_register(reg + 409, OutBack_Sched_1_AC_Mode_WT)
-                    logging.info("......changing schedule 1 mode to: " + str(Sched_1_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - changing schedule 1 mode to: " + str(Sched_1_AC_Mode_WT))
+                    logging.info("......changing sch1 mode to: " + str(Sched_1_AC_Mode_WT))
+                    ErrorPrint("Info : CMS - changing sch1 mode to: " + str(Sched_1_AC_Mode_WT))
                     Sched_1_check_flag = 1
                 else:
                     Sched_1_check_flag = 0
@@ -382,12 +382,12 @@ while True:
                 OutBack_Sched_2_AC_Mode_Hour = response.registers[0]
                 response = client.read_holding_registers(reg + 414, 1)
                 OutBack_Sched_2_AC_Mode_Minute = response.registers[0]
-                logging.info(".... Outback schedule_2 [h:mm] " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " +str(Sched_2_AC_Mode))
+                logging.info(".... Outback sch2 [h:mm] " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " +str(Sched_2_AC_Mode))
                 
                 if auto_scheduling =="true" and OutBack_Sched_2_AC_Mode != OutBack_Sched_2_AC_Mode_WT:
                     rw = client.write_register(reg + 412, OutBack_Sched_2_AC_Mode_WT)
-                    logging.info("......changing schedule 2 mode to: " + str(Sched_2_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - changing schedule 2 mode to: " + str(Sched_2_AC_Mode_WT))
+                    logging.info("......changing sch2 mode to: " + str(Sched_2_AC_Mode_WT))
+                    ErrorPrint("Info : CMS - changing sch2 mode to: " + str(Sched_2_AC_Mode_WT))
                     Sched_2_check_flag = 1
                 else:
                     Sched_2_check_flag = 0
@@ -418,12 +418,12 @@ while True:
                 OutBack_Sched_3_AC_Mode_Hour = response.registers[0]
                 response = client.read_holding_registers(reg + 417, 1)
                 OutBack_Sched_3_AC_Mode_Minute = response.registers[0]
-                logging.info(".... Outback schedule_3 [h:mm] " + str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " +str(Sched_3_AC_Mode))
+                logging.info(".... Outback sch3 [h:mm] " + str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " +str(Sched_3_AC_Mode))
                
                 if auto_scheduling =="true" and OutBack_Sched_3_AC_Mode != OutBack_Sched_3_AC_Mode_WT:
                     rw = client.write_register(reg + 415, OutBack_Sched_3_AC_Mode_WT)
-                    logging.info("......changing schedule 3 mode to: " + str(Sched_3_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - changing schedule 3 mode to: " + str(Sched_3_AC_Mode_WT))
+                    logging.info("......changing sch_3 mode to: " + str(Sched_3_AC_Mode_WT))
+                    ErrorPrint("Info : CMS - changing sch3 mode to: " + str(Sched_3_AC_Mode_WT))
                     Sched_3_check_flag = 1
                 else:
                     Sched_3_check_flag = 0
