@@ -3,7 +3,7 @@ import json
 import pprint                       # DPO debug - doar pentru a vizualiza JSON - nu este mandatory
 import mysql.connector as mariadb
 
-script_ver = "0.2.20191012"
+script_ver = "0.2.20191117"
 print("script ver  :" + script_ver)
 
 host       ="192.168.0.100"
