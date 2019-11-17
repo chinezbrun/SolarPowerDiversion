@@ -84,6 +84,6 @@ mydb.commit()
 mycursor.close()
 mydb.close()
 
-#with open('//192.168.0.100/web/MonitorMate_mod/Weather/weather.json', 'w') as outfile:      #from laptop
-with open('weather.json', 'w') as outfile:
+with open('/volume1/web/SolarPowerDiversion/PredictiveData/weather/weather.json', 'w') as outfile:      #from laptop
+#with open('weather.json', 'w') as outfile:
     json.dump(data, outfile)
