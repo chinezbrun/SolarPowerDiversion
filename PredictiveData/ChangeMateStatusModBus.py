@@ -8,7 +8,7 @@ from pymodbus.payload import BinaryPayloadDecoder
 from configparser import ConfigParser
 import sys, os
 
-script_ver = "0.4.20191117"
+script_ver = "0.4.20191226"
 print ("script version: "+ script_ver)
 
 pathname          = os.path.dirname(sys.argv[0])        
@@ -350,16 +350,16 @@ while True:
                 
                 if auto_scheduling =="true" and OutBack_Sched_1_AC_Mode != OutBack_Sched_1_AC_Mode_WT:
                     rw = client.write_register(reg + 409, OutBack_Sched_1_AC_Mode_WT)
-                    logging.info("......changing sch1 mode to: " + str(Sched_1_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - changing sch1 mode to: " + str(Sched_1_AC_Mode_WT))
+                    logging.info("......updating Mode 1 to: " + str(Sched_1_AC_Mode_WT))
+                    ErrorPrint("Info : CMS - updating Mode 1 to: " + str(Sched_1_AC_Mode_WT))
                     Sched_1_check_flag = 1
                 else:
                     Sched_1_check_flag = 0
                     
                 if auto_scheduling =="true" and Sched_1_AC_Mode=="MiniGrid" and OutBack_Sched_1_AC_Mode_Hour != minigrid_start[now.month-1][minigrid_pos]:
                     rw = client.write_register(reg + 410, minigrid_start[now.month-1][minigrid_pos])
-                    logging.info(".....writing start hour : " + str(minigrid_start[now.month-1][minigrid_pos]))
-                    ErrorPrint("Info : CMS - MiniGrid start hour (" + str(minigrid_start[now.month-1][minigrid_pos])+ ") update")
+                    logging.info(".....updating start hour : " + str(minigrid_start[now.month-1][minigrid_pos]))
+                    ErrorPrint("Info : CMS - updating MiniGrid start at " + str(minigrid_start[now.month-1][minigrid_pos]))
                     Sched_1_check_flag1 = 1
                 else:
                     Sched_1_check_flag1 = 0
@@ -386,16 +386,16 @@ while True:
                 
                 if auto_scheduling =="true" and OutBack_Sched_2_AC_Mode != OutBack_Sched_2_AC_Mode_WT:
                     rw = client.write_register(reg + 412, OutBack_Sched_2_AC_Mode_WT)
-                    logging.info("......changing sch2 mode to: " + str(Sched_2_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - changing sch2 mode to: " + str(Sched_2_AC_Mode_WT))
+                    logging.info("......updating Mode 2 to: " + str(Sched_2_AC_Mode_WT))
+                    ErrorPrint("Info : CMS - updating Mode 2 to: " + str(Sched_2_AC_Mode_WT))
                     Sched_2_check_flag = 1
                 else:
                     Sched_2_check_flag = 0
 
                 if auto_scheduling =="true" and Sched_2_AC_Mode=="Backup" and OutBack_Sched_2_AC_Mode_Hour != backup_start[now.month-1][backup_pos]:
                     rw = client.write_register(reg + 413, backup_start[now.month-1][backup_pos])
-                    logging.info(".....writing start hour : " + str(backup_start[now.month-1][backup_pos]))
-                    ErrorPrint("Info : CMS - Backup start hour ("+ str(backup_start[now.month-1][backup_pos]) +") update")
+                    logging.info(".....updating start hour : " + str(backup_start[now.month-1][backup_pos]))
+                    ErrorPrint("Info : CMS - updating Backup   start at "+ str(backup_start[now.month-1][backup_pos]))
                     Sched_2_check_flag1 = 1
                 else:
                     Sched_2_check_flag1 = 0                   
@@ -422,16 +422,16 @@ while True:
                
                 if auto_scheduling =="true" and OutBack_Sched_3_AC_Mode != OutBack_Sched_3_AC_Mode_WT:
                     rw = client.write_register(reg + 415, OutBack_Sched_3_AC_Mode_WT)
-                    logging.info("......changing sch_3 mode to: " + str(Sched_3_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - changing sch3 mode to: " + str(Sched_3_AC_Mode_WT))
+                    logging.info("......updating Mode 3 to: " + str(Sched_3_AC_Mode_WT))
+                    ErrorPrint("Info : CMS - updating Mode 3 to: " + str(Sched_3_AC_Mode_WT))
                     Sched_3_check_flag = 1
                 else:
                     Sched_3_check_flag = 0
                     
                 if auto_scheduling =="true" and Sched_3_AC_Mode=="Backup" and OutBack_Sched_3_AC_Mode_Hour != backup_start[now.month-1][backup_pos]:
                     rw = client.write_register(reg + 416, backup_start[now.month-1][backup_pos])
-                    logging.info(".....writing start hour : " + str(backup_start[now.month-1][backup_pos]))
-                    ErrorPrint("Info : CMS - Backup start hour ("+ str(backup_start[now.month-1][backup_pos]) +") update")
+                    logging.info(".....updating start hour : " + str(backup_start[now.month-1][backup_pos]))
+                    ErrorPrint("Info : CMS - updating Backup   start at "+ str(backup_start[now.month-1][backup_pos]))
                     Sched_3_check_flag1 = 1
                 else:
                     Sched_3_check_flag1 = 0                      
