@@ -8,7 +8,7 @@ from pymodbus.payload import BinaryPayloadDecoder
 from configparser import ConfigParser
 import sys, os
 
-script_ver = "0.4.20191226"
+script_ver = "0.4.4_20200221"
 print ("script version: "+ script_ver)
 
 pathname          = os.path.dirname(sys.argv[0])        
@@ -84,6 +84,7 @@ mate3_did = {
 # variable to keep start hour of inverter modes based on month and weather evolution
 # first position is default
 # second position is weather corrected - level 1
+# third position is weather corrected  - level 2
 minigrid_start = [
     [3,10,10],       # January
     [2,10,10],       # February
@@ -258,26 +259,31 @@ if smart_weather == "true":
         myresult = mycursor.fetchall()
         for x in myresult:
             daily_clouds=x[0]
-        logging.info("... daily_clouds: " + str(daily_clouds))
+            
+        if daily_clouds <= clouds_limit:
+            logging.info("... daily_clouds: " + str(daily_clouds) + "% - normal limit")
+            ErrorPrint("Info : CMS - WT: clouds "+ str(daily_clouds) + "% - normal limit")
         if daily_clouds > clouds_limit and daily_clouds < 81:
             minigrid_pos = 1 # second position in the table 
             backup_pos   = 1 # second position in the table 
-            logging.info("... clouds above limit 1")
+            logging.info("... daily_clouds: " + str(daily_clouds) + "% - above limit 1")
             ErrorPrint("Info : CMS - WT: clouds "+ str(daily_clouds) + "% - above limit 1")
-        if daily_clouds > 80 and daily_clouds < 96:
+        if daily_clouds > 80 and daily_clouds < 99:
             minigrid_pos = 2 # second position in the table 
             backup_pos   = 2 # second position in the table 
-            logging.info("... clouds above limit 2")
+            logging.info("... daily_clouds: " + str(daily_clouds) + "% - above limit 2")
             ErrorPrint("Info : CMS - WT: clouds "+ str(daily_clouds) + "% - above limit 2")
-        if daily_clouds > 95:
+        if daily_clouds > 98:
             OutBack_Sched_1_AC_Mode_WT=4
             OutBack_Sched_2_AC_Mode_WT=4
             OutBack_Sched_3_AC_Mode_WT=65535
-            logging.info("... clouds above limit 3")
+            logging.info("... daily_clouds: " + str(daily_clouds) + "% - above limit 3")
             ErrorPrint("Info : CMS - WT: clouds "+ str(daily_clouds) + "% - above limit 3")
+
         mycursor.close()
         mydb.close()
         logging.info(".. MariaDB closed")
+    
     except:
         logging.info(".. MariaDB connection failed")
         ErrorPrint("Error: CMS - MariaDB connection failed")
@@ -290,6 +296,8 @@ print("------------------------------------------------")
 logging.info("Building MATE3 MODBUS connection")
 # Mate3 connection
 try:
+    logging.info(".. waiting 10 seconds ")
+    time.sleep(10)
     client = ModbusClient(mate3_ip, mate3_modbus)
     logging.info(".. Make sure we are indeed connected to an Outback power system")
     reg    = sunspec_start_reg
