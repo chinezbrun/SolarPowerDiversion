@@ -9,9 +9,6 @@
 # GNU General Public License at <http://www.gnu.org/licenses/>
 # for more details.
 
-script_ver = "1.0.20191213"
-print("---Solar Diversion Power build:", script_ver)
-
 import json                                    # module for JSON decoding
 import shutil                                  # module for copy file
 from pprint import pprint
@@ -22,7 +19,13 @@ from datetime import datetime, timedelta
 from array import *
 import statistics
 from configparser import ConfigParser
+import paho.mqtt.client as mqtt
+import paho.mqtt.publish as publish
 import sys, os
+
+
+script_ver = "1.0.1_202000306"
+print("---Solar Diversion Power build:", script_ver)
 
 #********************************** subroutines **********************************
 #soubroutine for pushnotification - pushbullet app need to be installed
@@ -65,6 +68,12 @@ def CloseAll():
     GPIO.output(18, GPIO.HIGH)
     load_02 = "inactive"
     return
+
+def mqtt_client():
+    
+    return
+
+
 
 #********************************** initialization **********************************
 print("---starting initialiazation...")
@@ -255,18 +264,23 @@ while True:
                 charger_80_PV_array.append(charger_80_PV)
                                                          
                 if boiler_temp_active == "true":
-                     with open(CommonFiles +'/PCSensor/TEMPer21.txt', 'r') as temp:
+                    with open(CommonFiles +'/PCSensor/TEMPer21.txt', 'r') as temp:
                         lines     = temp.read().splitlines()
-                        last_line = lines[-1]         
-                        if last_line[31] == "℃":                                   # checklast digit
-                            boiler_temp = float(last_line[27:31])                  # character 27-31 converted to numbers temp with one digit         
+                        if lines:                                                      # check if file is empty
+                            last_line = lines[-1]         
+                            if last_line[31] == "℃":                                  # checklast digit
+                                boiler_temp = float(last_line[27:31])                  # character 27-31 converted to numbers temp with one digit         
+                            else:
+                                boiler_temp = float(last_line[27:32])                  # character 27-32 converted to numbers temp with 2 digits
+                            temp_time = last_line[0:19]                                # caracter 0-19 to get the string of the date and time
                         else:
-                            boiler_temp = float(last_line[27:32])                  # character 27-32 converted to numbers temp with 2 digits
-                        temp_time = last_line[0:19]                                # caracter 0-19 to get the string of the date and time
-                        FMT       ="%Y-%m-%d %H:%M:%S"                             # format of the datetime
-                        temp_time = time.strptime(temp_time, FMT)                  # format the temp_time according FMT
-                        time_now  = time.localtime()                               # get localtime
-                        deltatime = (time.mktime(time_now)-time.mktime(temp_time)) # get delta in seconds between two times
+                            ErrorPrint("Alert: No data in temperature file")
+                            temp_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")   # dummy data
+                            boiler_temp = 70                                           # dummy data
+                        FMT       ="%Y-%m-%d %H:%M:%S"                                 # format of the datetime
+                        temp_time = time.strptime(temp_time, FMT)                      # format the temp_time according FMT
+                        time_now  = time.localtime()                                   # get localtime
+                        deltatime = (time.mktime(time_now)-time.mktime(temp_time))     # get delta in seconds between two times
                 
                 #GPIO block
                 # protection: inverter overpower
