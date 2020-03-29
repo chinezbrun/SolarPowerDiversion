@@ -29,3 +29,4 @@ versions history
                - file name changed, paths and name of config file 
                - bugfix:when the boiler temp file is empty, program exit with error - now is fixed
 1.0.1_20200303 - include mqtt module - not used now - preparation for future transmission
+1.0.2_20200329 - mqtt module can be activated / dezactivated from cfg file - used for publish various data for different platforms i.e Home Assistant
