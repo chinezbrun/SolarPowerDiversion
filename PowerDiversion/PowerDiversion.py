@@ -24,7 +24,7 @@ import paho.mqtt.publish as publish
 import sys, os
 
 
-script_ver = "1.0.1_202000306"
+script_ver = "1.1.1_20200428"
 print("---Solar Diversion Power build:", script_ver)
 
 #********************************** subroutines **********************************
@@ -138,6 +138,7 @@ stop_UP               ="inactive"
 divert                ="inactive"
 read_file             = 0 #counter of read atempts
 loop_no               = 0
+error_count           = 0 # counter of special errors
 loop_time             = time.time()
 stamp_ref             =""
 ac_use_time           = 0 
@@ -266,17 +267,17 @@ while True:
                 charger_80_PV_array.append(charger_80_PV)
                                                          
                 if boiler_temp_active == "true":
-                    with open(CommonFiles +'/PCSensor/TEMPer21.txt', 'r') as temp:
+                    with open(ServerPath + '/data/boiler_temp.txt', 'r') as temp:
                         lines     = temp.read().splitlines()
                         if lines:                                                      # check if file is empty
                             last_line = lines[-1]         
-                            if last_line[31] == "℃":                                  # checklast digit
+                            if last_line[31] == "g":                                   # checklast digit
                                 boiler_temp = float(last_line[27:31])                  # character 27-31 converted to numbers temp with one digit         
                             else:
-                                boiler_temp = float(last_line[27:32])                  # character 27-32 converted to numbers temp with 2 digits
+                                boiler_temp = float(last_line[27:30])                  # character 27-32 converted to numbers temp with 2 digits
                             temp_time = last_line[0:19]                                # caracter 0-19 to get the string of the date and time
                             
-                            # trial_MQTT
+                            # MQTT - home assistant integration
                             if MQTT_active=='true':
                                 publish.single('home-assistant/solar/boiler_temp', boiler_temp, hostname=MQTT_broker)                        
                         
@@ -284,7 +285,7 @@ while True:
                             ErrorPrint("Alert: No data in temperature file")
                             temp_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")   # dummy data
                             boiler_temp = 70                                           # dummy data
-                        FMT       ="%Y-%m-%d %H:%M:%S"                                 # format of the datetime
+                        FMT       ="%d-%m-%Y %H:%M:%S"                                 # format of the datetime
                         temp_time = time.strptime(temp_time, FMT)                      # format the temp_time according FMT
                         time_now  = time.localtime()                                   # get localtime
                         deltatime = (time.mktime(time_now)-time.mktime(temp_time))     # get delta in seconds between two times
@@ -520,6 +521,7 @@ while True:
                 
                 # reset loop variables before exit loop IF
                 read_file             = 0
+                error_count           = 0
                 loop_no               = 0
                 divert_pwr_array      = []
                 ac_out_pwr_array      = []
@@ -546,7 +548,15 @@ while True:
         ErrorPrint("Error: OSError - host is down!")
         print("Info : OSError - delay applyed")
     except Exception as e:
-        ErrorPrint("STOP: Exiting...- "+ str(e))
-        PushNotification("STOP: Exiting...- "+ str(e))
-        GPIO.cleanup()
-        raise SystemExit
+        if error_count < 3:
+            ErrorPrint("Error: Unexpected...- "+ str(e))
+            error_count = error_count + 1
+        elif error_count < 4:
+            ErrorPrint("Error: Unexpected...- "+ str(e))
+            ErrorPrint("Info: Preparing exit and restart")
+            error_count = error_count + 1        
+        else:            
+            ErrorPrint("STOP: Exiting...- "+ str(e))
+            PushNotification("STOP: Exiting...- "+ str(e))
+            GPIO.cleanup()
+            raise SystemExit

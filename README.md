@@ -24,9 +24,9 @@ PowerDiversion.sh (is not mandatory) -- is an example of start-up script to run 
 ### PredictiveData/ChangeMateStatusModBus.py
 This script is using ModBus protocol to read and WRITE parameters to MATE3.Can be installed on Raspberry or on any other host computer.
 ChangeMateStatusModBus.py is running once pe day (recommended) -- task should be created on Host computer.
-The main output of the script (current) is to adjust the schedule in MATE3 Flextime (Minigrid and Backup mode).
-These adjustments are based on simple input data like month or whether forecast and can be extended in future development
-
+Currently the main output of the script is to adjust the schedule in MATE3 Flextime (Minigrid and Backup mode) or specific target parameter.
+These adjustments are based on arguments, simple input data like month or whether forecast and can be extended in future development
+ 
 ChangeMateStatusModBus.cfg -- is the configuration file for this script and can be configured based on the needs.
 
 ### PredictiveData/weather/weather_api.py
