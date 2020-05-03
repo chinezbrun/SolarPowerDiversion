@@ -1,0 +1,26 @@
+change specific parameter in the mate by opening ChangeMateStatus with an argument
+
+ChangeMateStatusModBus.py argument 
+
+# arguments list:
+ on          # turn on  inverter's charger
+ off         # turn off inverter's charger
+ drop        # drop AC
+ use         # use AC
+ Generator   # switch AC mode to 
+ Support     # switch AC mode to       
+ GriedTied   # switch AC mode to      
+ UPS         # switch AC mode to       
+ Backup      # switch AC mode to             
+ MiniGrid    # switch AC mode to            
+ GridZero    # switch AC mode to      
+ Disabled    # switch AC mode to   
+
+# sintax example to change inverter AC mode to MiniGrid 
+
+# LINUX:
+lxterminal -e python3 /var/www/html/SolarPowerDiversion/PredictiveData/ChangeMateStatusModBus.py MiniGrid
+
+# WINDOWS:
+python3 //192.168.0.100/web/SolarPowerDiversion/PredictiveData/ChangeMateStatusModBus.py MiniGrid
+
