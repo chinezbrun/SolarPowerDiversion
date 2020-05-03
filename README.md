@@ -47,3 +47,5 @@ record record data in MariaDB in order to be used later on by ChangeMateStatusMo
 8. Set a task in host computer to run PredictiveData/ChangeMateStatusModBus.py every day (preferably @ 21:30)
 
 
+
+
