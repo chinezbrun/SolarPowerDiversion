@@ -15,7 +15,6 @@ pathname          = os.path.dirname(sys.argv[0])
 fullpathname      = os.path.abspath(pathname)+'/ChangeMateStatusModBus.cfg' 
 
 print ("working directory: " +  str(os.path.abspath(pathname)))
-
        
 config            = ConfigParser()
 config.read(fullpathname)
@@ -354,7 +353,6 @@ logging.info(".. Connected OK to an Outback system")
 
 #This is the main loop
 #--------------------------------------------------------------
-
 startReg = reg + size + 4
 while True:
     reg = startReg
@@ -475,7 +473,6 @@ while True:
 
 # smart charging - SC
 # read actual charge mode,SOC, compare with config values or the value modified by SOC routine below
-
             if "Radian Inverter Configuration Block" in blockResult['DID']:
                 logging.info(".. Detect a FXR inverter") 
                 response = client.read_holding_registers(reg + 24, 1)
@@ -507,8 +504,7 @@ while True:
                 else:    
                     ac_mode_flag = 0
 
-#FLEXNET Block
-                
+#FLEXNET Block            
             if "FLEXnet-DC Real Time Block" in blockResult['DID']:
                 logging.info(".. Detect a FLEXnet-DC Real Time Block")   
                 response = client.read_holding_registers(reg + 27, 1)
@@ -549,4 +545,4 @@ while True:
         logging.info(".. verification loop " +  str(loop))
         time.sleep(1)
         loop = loop + 1 # only for reporting purpose
-    
+   
