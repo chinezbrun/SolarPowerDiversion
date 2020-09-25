@@ -1,0 +1,366 @@
+{
+ "time_posted": "2020-05-22 20:00",
+ "flextime": {
+  "January": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 3,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 14,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+],
+  "February": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 2,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 14,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+],
+  "March": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 2,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 16,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+ ],
+   "April": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 1,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 17,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 16,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+ ],
+    "May": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 0,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 18,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 17,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+ ],
+     "June": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 23,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 18,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 6,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 18,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 17,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+ ],
+      "July": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 23,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 18,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 6,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 17,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 17,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+ ],
+       "August": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 23,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 18,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 17,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+ ],
+    "September": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 0,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 17,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 16,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+ ],
+   "October": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 2,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 16,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+ ],
+   "November": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 2,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 14,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+],
+  "December": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 3,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 14,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 10,
+   "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 12,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+	}
+]
+ }
+}
+
