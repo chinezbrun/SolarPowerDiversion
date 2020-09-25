@@ -1,0 +1,7 @@
+0.2.0 20191001     - initial relase
+0.2.1 20200222     - error correction of summary of the day calculation, based on time and current date
+0.3.0 20200606     - major changes in the script,
+                     flextime_schedule in json format,
+                     calculate schedule based on cloud level 0-2,
+                     export schedule in json format,
+                
