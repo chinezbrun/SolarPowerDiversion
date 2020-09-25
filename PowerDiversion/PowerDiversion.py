@@ -24,7 +24,7 @@ import paho.mqtt.publish as publish
 import sys, os
 
 
-script_ver = "1.1.1_20200428"
+script_ver = "1.2.0_20200914"
 print("---Solar Diversion Power build:", script_ver)
 
 #********************************** subroutines **********************************
@@ -43,20 +43,17 @@ def PushNotification (push):
 #error log subroutine
 def ErrorPrint (str) :
     try:
-        with open(ServerPath +'/data/raspberry_info.log','r') as file:
+        with open(InOutDataPath +'raspberry_info.log','r') as file:
             save = file.read()
-        with open(ServerPath +'/data/raspberry_info.log','w') as file:
-            file = open(ServerPath +'/data/raspberry_info.log','a')
+        with open(InOutDataPath +'raspberry_info.log','w') as file:
+            file = open(InOutDataPath +'raspberry_info.log','a')
             file.write(time.strftime("%d/%m/%Y %H:%M:%S "))
             file.write(str + "\r\n")
             print(str)
-        with open(ServerPath +'/data/raspberry_info.log','a') as file:
+        with open(InOutDataPath +'raspberry_info.log','a') as file:
             file.write(save)
         file.close()
         
-        if duplicate_logs == 'true':                                                                                     # true - if we need to copy logs also in alternative locations
-            shutil.copy(ServerPath +'/data/raspberry_info.log', ServerPath_copy + '/data/raspberry_info.log')      # copy file in both locations
-                
         return
     except OSError:
        print("Errorhandling: double error in ErrorPrint")
@@ -72,8 +69,6 @@ def CloseAll():
 def mqtt_client():
     
     return
-
-
 
 #********************************** initialization **********************************
 print("---starting initialiazation...")
@@ -92,9 +87,7 @@ divert_pwr_ref        = int(config.get('solarpower', 'divert_pwr_ref'))         
 divert_by_state       = config.get('solarpower', 'divert_by_state')              # default = false --if true charger state is used if false baterry_voltage ref is used to activete diversion relay
 chargers_PV_ref       = int(config.get('solarpower', 'chargers_PV_ref'))         # default = 90    --used to activate load 01 when no divertion power info available (i.e forced)
 soc_min_limit         = int(config.get('solarpower','soc_min_limit'))            # default = 70    --SOC min used for stop level 1 utilities - restauration level SOC_min +5
-ServerPath            = config.get('solarpower', 'ServerPath')                   # path            --web server location JSON file should be there /data/ststus.json                                   
-duplicate_logs        = config.get('solarpower', 'duplicate_logs')               # default = false --used to save the logs to multiple location if two servers are active
-ServerPath_copy       = config.get('solarpower', 'ServerPath_copy')              # path            --second web server location 
+InOutDataPath         = config.get('solarpower', 'InOutDataPath')                # path            --location for input output data (should be there stastus.json, logs, temperature file)                                   
 grid_connect          = config.get('solarpower', 'grid_connect')                 # label           --used during various decision --should be identic with value provided by your device json file (i.e AC Use)
 grid_droped           = config.get('solarpower', 'grid_droped')                  # label           --used during various decision --should be identic with value provided by your device json file
 floating              = config.get('solarpower', 'floating')                     # label           --used during various decision --should be identic with value provided by your device json file 
@@ -112,7 +105,7 @@ MQTT_broker           = config.get('MQTT', 'MQTT_broker')                       
 boiler_temp_active    = config.get('boiler', 'boiler_temp_active')               # default = false --true if boiler temperature sensor is installed and manitoring system is in place and save data to common folder
 boiler_temp_ref       = int(config.get('boiler', 'boiler_temp_ref'))             # default= 70     --max boiler temperature to stop diversion
 deltatime_ref         = int(config.get('boiler', 'deltatime_ref'))               # default= 900    --max time in seconds to stop diversion due to no temperature data 
-CommonFiles           = config.get('boiler', 'CommonFiles')                      # path            --location for various file - boliler temperature log should be there
+
 if boiler_temp_active != "true":                                                 # IF no boiler monitoring in place set dummy ref temp, temp and deltatime for running purpose of the script
     boiler_temp_ref   = 70                                                     
     boiler_temp       = 0
@@ -173,16 +166,13 @@ print("# of chargers:       ", chargers)
 print("boiler_temp_active:  ", boiler_temp_active)
 print("boiler_temp_ref:     ", boiler_temp_ref)
 print("deltatime_ref:       ", deltatime_ref)
-print("ServerPath:          ", ServerPath)
-print("duplicate_logs:      ", duplicate_logs)
-print("ServerPath_copy:     ", ServerPath_copy)
-print("Common Files path:   ", CommonFiles)
+print("InOutDataPath:       ", InOutDataPath)
 
 # last check if JSON location is available and exist
-if (os.path.isdir(ServerPath)) == True:
+if (os.path.isdir(InOutDataPath)) == True:
     print("---initialization completed, starting the main loop")
 else:
-    print("---initialization failed, server location not found")
+    print("---initialization failed, InOutDataPath not found")
     
 ErrorPrint("START: program ver:" + script_ver)
 PushNotification("START: program ver:" + script_ver)
@@ -194,7 +184,7 @@ while True:
             start_time            = time.time() 
             read_file             = read_file+1
             # open JSON file and decode
-            data                  = json.load(open(ServerPath + '/data/status.json'))
+            data                  = json.load(open(InOutDataPath + 'status.json'))
             #pprint(data)                                                         # DPO debug to print the JSON file
             stamp                 = data["time"]["server_local_time"]
             pos = 0 
@@ -249,10 +239,8 @@ while True:
                 
             divert_pwr            = battery_voltage * shunt_c
             ac_out_pwr            = ac_output_voltage * (inverter_current + buy_current + inverter_current1 + buy_current1)
-            
-            
 
-            # if JSON file is changed incremet the loops read and analyse                                 
+            # if JSON file is changed then increment the loops read and analyse                                 
             if stamp != stamp_ref:
                 print("---------------------------------------loop:", loop_no+1)
                 stamp_ref = stamp
@@ -267,7 +255,7 @@ while True:
                 charger_80_PV_array.append(charger_80_PV)
                                                          
                 if boiler_temp_active == "true":
-                    with open(ServerPath + '/data/boiler_temp.txt', 'r') as temp:
+                    with open(InOutDataPath + 'boiler_temp.txt', 'r') as temp:
                         lines     = temp.read().splitlines()
                         if lines:                                                      # check if file is empty
                             last_line = lines[-1]         
@@ -277,9 +265,9 @@ while True:
                                 boiler_temp = float(last_line[27:30])                  # character 27-32 converted to numbers temp with 2 digits
                             temp_time = last_line[0:19]                                # caracter 0-19 to get the string of the date and time
                             
-                            # MQTT - home assistant integration
-                            if MQTT_active=='true':
-                                publish.single('home-assistant/solar/boiler_temp', boiler_temp, hostname=MQTT_broker)                        
+                            # MQTT - home assistant integration example
+                            #if MQTT_active=='true':
+                                #publish.single('home-assistant/solar/boiler_temp', boiler_temp, hostname=MQTT_broker)                        
                         
                         else:
                             ErrorPrint("Alert: No data in temperature file")
@@ -304,7 +292,7 @@ while True:
                     ErrorPrint("Alert: Power peak: "+ str(ac_out_pwr)+" -> load_01 & 02 STOP")
                     
                 #GPIO block
-                #protection: LOW SOC in UPS mode 
+                #protection: if SOC is low then stop first floor and utilities 
                 if soc<soc_min_limit and stop_UP=="inactive":   
                     GPIO.output(23, GPIO.LOW)
                     stop_UP = "active"
@@ -327,13 +315,13 @@ while True:
                     charger_60_mode==equalize or charger_80_mode==equalize):
                     GPIO.output(22, GPIO.LOW)
                     divert = "active"
-                elif divert_by_state == "false" and deltatime<deltatime_ref and boiler_temp<boiler_temp_ref and battery_voltage > (voltage_ref_compens + 1):
+                elif divert_by_state == "false" and deltatime<deltatime_ref and boiler_temp<boiler_temp_ref and battery_voltage > (voltage_ref_compens):
                     GPIO.output(22, GPIO.LOW)
                     divert = "active"
-                elif divert == "active" and divert_by_state == "false"and deltatime<deltatime_ref and boiler_temp<boiler_temp_ref and battery_voltage > (voltage_ref_compens + 0.5):
+                elif divert == "active" and divert_by_state == "false"and deltatime<deltatime_ref and boiler_temp<boiler_temp_ref and battery_voltage > (voltage_ref_compens - 0.5):
                     GPIO.output(22, GPIO.LOW)
                     divert = "active"                   
-                elif divert == "active" and divert_by_state == "false" and battery_voltage < (voltage_ref_compens + 0.5):
+                elif divert == "active" and divert_by_state == "false" and battery_voltage < (voltage_ref_compens - 0.5):
                     GPIO.output(22, GPIO.HIGH)
                     divert = "inactive"
                 elif deltatime<deltatime_ref and boiler_temp>boiler_temp_ref: 
@@ -390,7 +378,7 @@ while True:
                      no_ac_lasttime    = 0
                                       
             #GPIO block    
-            # protection: curent_status - the same file for long time - not changed
+            # protection: the same file for long time 
             if (time.time() - loop_time)>300:
                 GPIO.output(17, GPIO.HIGH)
                 load_01 = "inactive"
@@ -464,7 +452,7 @@ while True:
                     load_02 = "inactive"
 
                 # print block
-                uptime = round((time.time()- up_time)/86400,2)
+                uptime = round((time.time()- up_time)/86400,3)
                 print("stamp:", stamp,)
                 print("up_time:", uptime," reads:", read_file," loops:", loop_no)
                 print("GRID__time/pwr_cut[h]:  ", round(ac_use_time/3600,1),"/",round(no_ac_use_time/3600,1))
@@ -487,9 +475,9 @@ while True:
                 print("Stop utilities relay:   ", stop_UP)
                 
                 # write logfile block
-                with open(ServerPath + '/data/raspberry_data.log','r') as file:
+                with open(InOutDataPath + 'raspberry_data.log','r') as file:
                     save = file.read()
-                with open(ServerPath + '/data/raspberry_data.log','w') as file:
+                with open(InOutDataPath + 'raspberry_data.log','w') as file:
                     file.write("--------------------------------------" + "\r\n")
                     file.write("stamp:" + str(stamp) +"\r\n")
                     file.write("up_time:" + str(uptime)  + " reads:" + str(read_file) + " loops:" + str(loop_no) +"\r\n")
@@ -512,12 +500,13 @@ while True:
                     file.write("Load_02 relay:         " + str(load_02) + "\r\n")
                     file.write("Stop utilities relay:  " + str(stop_UP) + "\r\n")
                     
-                with open(ServerPath + '/data/raspberry_data.log',"a") as file:
+                with open(InOutDataPath + 'raspberry_data.log',"a") as file:
                     file.write(save)
                 file.close()
                 
-                if duplicate_logs == 'true':
-                    shutil.copy(ServerPath + '/data/raspberry_data.log', ServerPath_copy + '/data/raspberry_data.log') #copy the file in both locations
+                # MQTT - home assistant integration - uptime 
+                if MQTT_active=='true':
+                    publish.single('home-assistant/solar/power_diversion_uptime', uptime, hostname=MQTT_broker)                
                 
                 # reset loop variables before exit loop IF
                 read_file             = 0
@@ -534,7 +523,7 @@ while True:
     except FileNotFoundError:
         ErrorPrint("Error: FileNotFound")
     except ValueError:  # includes simplejson.decoder.JSONDecodeError
-        shutil.copy(ServerPath + '/data/status.json', ServerPath + '/data/status_error.json') 
+        shutil.copy(InOutDataPath + 'status.json', InOutDataPath + 'status_error.json') 
         ErrorPrint("Error: json decode file")
     except TypeError as e:
         ErrorPrint("Error: TypeError - " + str(e))

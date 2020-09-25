@@ -1,5 +1,5 @@
 # this script is used to optimmise solar power in OutBack system
-# runs on Raspberry PI 
+# runs only on Raspberry PI 
 
 versions history
 -----------------------
@@ -31,3 +31,13 @@ versions history
 1.0.1_20200303 - include mqtt module - not used now - preparation for future transmission
 1.1.0_20200414 - activate mqtt module for boiler temperature - integration with home assistant
 1.1.1_20200428 - minor improvement on error treatment 
+1.1.2_20200511 - change reference for load 2 (300w) 
+1.1.3_20200704 - change reference for load1, load 2 (400W) 
+1.2.0_20200914 - cleaning the code for unsued options
+               - revert 1.1.2, 1.1.3, 1.1.0 (not needed)
+               - input/output data path clearly specified in config file
+               - mqtt - push uptime (HA integration)
+---------------------------
+know improvements: 
+#1 load 1, 2 in config file , diverted reference power to be in line with loads
+#2 when boiler temperature is higher that reference, diversion stop - available power remains unknown - to investigate possibility to have sampling tests 
