@@ -18,20 +18,24 @@ PowerDiversion.py script is running once every X minute -- task should be create
 The JSON file used as input, is produced by MonitorMate_ModBus: https://github.com/chinezbrun/MonitorMate_ModBus. 
 PowerDiversion and MonitorMate_ModBus were designed to be used together.
 
-PowerDiversion.cfg -- is the configuration file for this script and can be configured based on the needs.
-PowerDiversion.sh (is not mandatory) -- is an example of start-up script to run the code at reboot
+PowerDiversion.cfg -- (mandatory) is the configuration file for this script and can be configured based on the needs.
+PowerDiversion.sh  -- (information only) is an example of start-up script to run the code at reboot
 
 ### PredictiveData/ChangeMateStatusModBus.py
-This script is using ModBus protocol to read and WRITE parameters to MATE3.Can be installed on Raspberry or on any other host computer.
-ChangeMateStatusModBus.py is running once pe day (recommended) -- task should be created on Host computer.
-Currently the main output of the script is to adjust the schedule in MATE3 Flextime (Minigrid and Backup mode) or specific target parameter.
-These adjustments are based on arguments, simple input data like month or whether forecast and can be extended in future development
- 
-ChangeMateStatusModBus.cfg -- is the configuration file for this script and can be configured based on the needs.
+This script is using ModBus protocol to WRITE parameters to MATE3.Can be installed on Raspberry or on any other host computer.
+
+These adjustments are based on provided arguments or simple input in dinamic.data.json.
+
+ChangeMateStatusModBus.py can be started when needed or at least once pe day (recommended) for wheather prediction -- task should be created on Host computer.
+Once is started, when no arguments is provided, script will read dinamic_data.json file and if founds any active flags (i.e OutbackBlock_flag	1) will write to Mate values present in that section. "notset" values are ignored. 
+Direct arguments, when provided, have priority over the json file. So, if the script is started with a specific argument (i.e  ChangeMateStatusModBus.py MiniGrid) the value will ovewrite any value for that specific target parameter, read from dinamic_data.json.
+
+ChangeMateStatusModBus.cfg -- (mandatory) is the configuration file for this script and can be configured based on the needs.
+dinamic_data.json          -- (mandatory) is the input file for this script
+valid_argument.txt         -- (information only) is the list of accepted arguments
 
 ### PredictiveData/weather/weather_api.py
-This is the first add-on for PredictiveData and is meant to run API weather https://home.openweathermap.org/, save a JSON file with weather prediction,
-record record data in MariaDB in order to be used later on by ChangeMateStatusModBus.py
+This is the first add-on for PredictiveData and is meant to run API weather https://home.openweathermap.org/, save weather.json file with weather prediction, record data in MariaDB, update dinamic_data.json in line with weather prediction and flextime_data.json, in order to be used later by ChangeMateStatusModBus.py
 
 ### Installation and Execution
 ---PowerDiversion---
