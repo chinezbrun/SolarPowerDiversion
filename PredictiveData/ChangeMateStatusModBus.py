@@ -1,65 +1,55 @@
 import logging
+import json
 import time
-import mysql.connector as mariadb
 from datetime import datetime
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from configparser import ConfigParser
+#import paho.mqtt.client as mqtt
+#import paho.mqtt.publish as publish
 import sys, os
 
-script_ver = "0.5.1_20200503"
+script_ver = "0.7.0_20200902"
 print ("script version   : "+ script_ver)
 
-pathname          = os.path.dirname(sys.argv[0])        
-fullpathname      = os.path.abspath(pathname)+'/ChangeMateStatusModBus.cfg' 
+curent_date_time  = datetime.now()
+pathname          = os.path.dirname(sys.argv[0])
+working_dir       = os.path.abspath(pathname) 
+print ("working directory: " +  working_dir)
 
-print ("working directory: " +  str(os.path.abspath(pathname)))
-       
-config            = ConfigParser()
-config.read(fullpathname)
+config                               = ConfigParser()
+config.read(working_dir + '/ChangeMateStatusModBus.cfg')
 
-#MATE3 connection
-mate3_ip          = config.get('MATE3 connection', 'mate3_ip')
-mate3_modbus      = config.get('MATE3 connection', 'mate3_modbus')
-sunspec_start_reg = 40000
+OutputPath                           = config.get('Connectivity', 'OutputPath')
+print("Output path      : " + OutputPath)
 
-# SQL Maria DB connection
-SQL_active        = config.get('Maria DB connection', 'SQL_active')                             
-host              = config.get('Maria DB connection', 'host')
-db_port           = config.get('Maria DB connection', 'db_port')
-user              = config.get('Maria DB connection', 'user')
-password          = config.get('Maria DB connection', 'password')
-database          = config.get('Maria DB connection', 'database')
-database1         = config.get('Maria DB connection', 'database1')
-ServerPath        = config.get('WebServer path', 'ServerPath')   
-print("server path      : " + ServerPath)
+mate3_ip                             = config.get('Connectivity', 'mate3_ip')
+mate3_modbus                         = config.get('Connectivity', 'mate3_modbus')
+sunspec_start_reg                    = 40000
+MQTT_active                          = config.get('Connectivity', 'MQTT_active')                        # default = false  -- if active will publish MQTT topics to varoius platforms i.e Home Assistant
+MQTT_broker                          = config.get('Connectivity', 'MQTT_broker')                        # your MQTT broker address - i.e 192.168.0.xxx
 
 # Dinamic Data
-smart_charge               = config.get('Dinamic data', 'smart_charge')
-soc_ok                     = int(config.get('Dinamic data', 'soc_ok'))
-soc_min                    = int(config.get('Dinamic data', 'soc_min'))
-soc_shdown                 = int(config.get('Dinamic data', 'soc_shdown'))
-charger_mode_sc            = config.get('Dinamic data', 'charger_mode_sc')
-smart_scheduling           = config.get('Dinamic data', 'smart_scheduling')
-smart_weather              = config.get('Dinamic data', 'smart_weather')
-clouds_limit_0             = int(config.get('Dinamic data', 'clouds_limit_0'))
-clouds_limit_1             = int(config.get('Dinamic data', 'clouds_limit_1'))
-clouds_limit_2             = int(config.get('Dinamic data', 'clouds_limit_2'))
-OutBack_Sched_1_AC_Mode_WT = int(config.get('Dinamic data', 'OutBack_Sched_1_AC_Mode_WT'))
-OutBack_Sched_2_AC_Mode_WT = int(config.get('Dinamic data', 'OutBack_Sched_2_AC_Mode_WT'))
-OutBack_Sched_3_AC_Mode_WT = int(config.get('Dinamic data', 'OutBack_Sched_3_AC_Mode_WT'))
-ac_mode_sc                 = 'Minigrid'
+dinamic_data                         = json.load(open(working_dir + '/dinamic_data.json'))
+Sched_1_AC_Mode_local                = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_1_ac_mode"]
+OutBack_Sched_1_AC_Mode_Hour_local   = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_1_ac_mode_hour"]
+OutBack_Sched_1_AC_Mode_Minute_local = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_1_ac_mode_minute"]
+Sched_2_AC_Mode_local                = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_2_ac_mode"]
+OutBack_Sched_2_AC_Mode_Hour_local   = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_2_ac_mode_hour"]
+OutBack_Sched_2_AC_Mode_Minute_local = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_2_ac_mode_minute"]
+Sched_3_AC_Mode_local                = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode"]
+OutBack_Sched_3_AC_Mode_Hour_local   = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode_hour"]
+OutBack_Sched_3_AC_Mode_Minute_local = dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode_minute"]
+OutbackBlock_flag                    = dinamic_data["OutbackBlock"]["OutbackBlock_flag"]
+Charger_Operating_Mode_local         = dinamic_data["RadianInverterConfigurationBlock"]["charger_operating_mode"]
+Grid_Input_Mode_local                = dinamic_data["RadianInverterConfigurationBlock"]["grid_input_mode"]
+InverterConfigurationBlock_flag      = dinamic_data["RadianInverterConfigurationBlock"]["InverterConfigurationBlock_flag"]
+OB_Charge_Enable_Disable_local       = dinamic_data["OutbackSystemControlBlock"]["Charge_Enable_Disable"]
+OutbackSystemControlBlock_flag       = dinamic_data["OutbackSystemControlBlock"]["OutbackSystemControlBlock_flag"]
+loop                                 = 0 
 
-loop                       = 0 # default - used to count no of verification loops till update complete
-minigrid_pos               = 0 # default - no weather inpact
-backup_pos                 = 0 # default - no weather inpact
-daily_clouds               = 0 # default - clear sky
-charger_flag               = 0 # default - no update if is not required by smart charge or external python arguments
-ac_mode_flag               = 0 # default - no update if is not required by external python arguments
-
-# ACmode_list is used to convert numbers in readable name 
-# in registry there the modes are coded like below list
+# ACmode_list is used to convert numbers in pretty name -- in registry modes are coded like below:
 ACmode_list = [
     "Generator",     # 0
     "Support",       # 1
@@ -69,65 +59,64 @@ ACmode_list = [
     "MiniGrid",      # 5
     "GridZero",      # 6
     "Disabled"]      # 7
-
-# variable to keep start hour of inverter modes based on month and weather evolution
-# first position  is with no weather impact       - clear sky
-# second position is weather corrected for clouds - level 1
-# third position  is weather corrected for clouds - level 2
-
-minigrid_start = [
-    [3,10,10],       # January
-    [2,10,10],       # February
-    [2,10,10],       # March
-    [1,8,10],        # April
-    [0,8,10],        # May
-    [23,6,8],        # June
-    [23,6,8],        # July
-    [0,8,8],         # August
-    [1,8,10],        # September
-    [2,10,10],       # October
-    [2,10,10],       # November
-    [3,10,10]]       # December
-
-backup_start = [
-    [14,13,12],      # January
-    [15,14,12],      # February
-    [16,15,12],      # March
-    [17,16,13],      # April
-    [18,17,13],      # May
-    [19,18,15],      # June
-    [19,18,15],      # July
-    [18,17,15],      # August
-    [17,16,13],      # September
-    [16,15,13],      # October
-    [15,14,12],      # November
-    [14,13,12]]      # December
+# Charge_Enable_Disable_list is used to convert numbers in pretty name -- in registry modes are coded like below:
+Charge_Enable_Disable_list = [
+    "Default",       #0
+    "StartBulk",     #1
+    "StopBulk",      #2
+    "StartEQ",       #3
+    "StopEQ"]        #4
 
 print("variables initialization completed")
 
-#Check external python arguments - this has priority in dinamic data and will overwrite init values
+# external python arguments - this has priority, dinamic_data will be overwriten
 if len(sys.argv) > 1:
+    
     if sys.argv[1] == 'on' or sys.argv[1] == 'off':
-        charger_mode_sc        = sys.argv[1] # new value for chager_mode received via MQTT or other programs
-        charger_flag           = 1
-        smart_charge           = "false"     # set to false in order to prevent conflicts 
-        ac_mode_flag           = 0           # set to zero  in order to prevent conflicts
-        print("..'charger_mode_sc' was overwritten: ", charger_mode_sc)
+        Charger_Operating_Mode_local    = sys.argv[1] # new value received 
+        OutbackBlock_flag = 0                         # to prevent conflicts
+        OutbackSystemControlBlock_flag  = 0
+        InverterConfigurationBlock_flag = 1
+        print("..'Charger_Operating_Mode_local' was overwritten: ", Charger_Operating_Mode_local)
+    
     if sys.argv[1] in ACmode_list:
-        ac_mode_sc             = sys.argv[1] # new value for AC mode received via MQTT or other programs
-        ac_mode_flag           = 1           
-        charger_flag           = 0           # set to zero  in order to prevent conflicts
-        smart_charge           = "false"     # set to false in order to prevent conflicts
-        smart_scheduling       = "false"     # set to false in order to prevent conflicts
-        print("..'ac_mode_sc' was overwritten: ", ac_mode_sc)
-        
+        Grid_Input_Mode_local           = sys.argv[1] # new value received 
+        OutbackBlock_flag = 0                         # to prevent conflicts
+        OutbackSystemControlBlock_flag  = 0
+        InverterConfigurationBlock_flag = 1
+        print("..'Grid_Input_Mode_local' was overwritten: ", Grid_Input_Mode_local)
+    
+    if sys.argv[1] in Charge_Enable_Disable_list:
+        OB_Charge_Enable_Disable_local  = sys.argv[1] # new value received 
+        OutbackBlock_flag = 0                         # to prevent conflicts
+        InverterConfigurationBlock_flag = 0
+        OutbackSystemControlBlock_flag  = 1
+        print("..'OB_Charge_Enable_Disable_local' was overwritten: ", OB_Charge_Enable_Disable_local)       
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y%m%d %H:%M:%S')
 logging.getLogger(__name__)
 
-now      = datetime.now()
-curent_time = time.localtime()
+curent_date_time  = datetime.now()
 
+#error log subroutine
+def EventLog (str) :
+    try:
+        with open(OutputPath + "/data/general_info.log","r") as file:
+            save = file.read()
+        with open(OutputPath + "/data/general_info.log","w") as file:
+            file = open(OutputPath + "/data/general_info.log","a")
+            file.write(curent_date_time.strftime("%d/%m/%Y %H:%M:%S "))
+            #file.write(str + "\r\n")
+            file.write(str + "\n")
+            #print(str)
+        with open(OutputPath + "/data/general_info.log","a") as file:
+            file.write(save)
+        return
+    except OSError:
+        print(str,"Error: CMS - error handling block: double error")
+
+# =================================== ModbusMate subroutines & variables =====================================
 # Define the dictionary mapping SUNSPEC DID's to Outback names
 # Device IDs definitions = (DID)
 # AXS_APP_NOTE.PDF from Outback website has the data
@@ -150,7 +139,6 @@ mate3_did = {
     65535: "End of SunSpec"
 }
 
-# Subroutines
 # Read SunSpec Header with logic from pymodbus example
 def decode_int16(signed_value):
     """
@@ -236,11 +224,9 @@ def getSunSpec(basereg):
     except:
         return None
     blocksize = int(register.registers[0])
-    #print(blocksize) # DPO debug
     return blocksize
 
 def getBlock(basereg):
-    #print(basereg) #DPO debug
     try:
         register = client.read_holding_registers(basereg)
     except:
@@ -260,283 +246,310 @@ def getBlock(basereg):
         print("ERROR: Unknown device type with DID=" + str(blockID))
     return {"size": blocksize, "DID": blockname}
 
-#error log subroutine
-def ErrorPrint (str) :
-    try:
-        with open(ServerPath + "/data/general_info.log","r") as file:
-            save = file.read()
-        with open(ServerPath + "/data/general_info.log","w") as file:
-            file = open(ServerPath + "/data/general_info.log","a")
-            file.write(now.strftime("%d/%m/%Y %H:%M:%S "))
-            #file.write(str + "\r\n")
-            file.write(str + "\n")
-            print(str)
-        with open(ServerPath + "/data/general_info.log","a") as file:
-            file.write(save)
-        return
-    except OSError:
-        print(str,"Error: CMS - Errorhandling block: double error")
-
-print("------------------------------------------------")
-print(" Weather module")
-print("------------------------------------------------")
-
-# smart weather module
-if smart_weather == "true":
-    logging.info("Weather module active. Checking forcast")
-    try:
-        mydb = mariadb.connect(host=host,port=db_port,user=user,password=password,database=database1)
-        logging.info(".. MariaDB connected")
-        if curent_time.tm_hour > 18:
-            sql="SELECT daily_clouds from summary where date = date(now() + INTERVAL 1 DAY)"
+def OutbackBlock():
+    global OutbackBlock_flag
+    loop = 0
+    while loop < 3 :
+        # autoscheduling 1 -- reading registries
+        response = client.read_holding_registers(reg + 409, 1)
+        OutBack_Sched_1_AC_Mode = response.registers[0]
+        response = client.read_holding_registers(reg + 410, 1)                
+        OutBack_Sched_1_AC_Mode_Hour = response.registers[0]
+        response = client.read_holding_registers(reg + 411, 1)
+        OutBack_Sched_1_AC_Mode_Minute = response.registers[0]
+        
+        if OutBack_Sched_1_AC_Mode == 65535:
+            Sched_1_AC_Mode = ACmode_list[OutBack_Sched_1_AC_Mode-65528]
         else:
-            sql="SELECT daily_clouds from summary where date = date(now())"
-        mycursor = mydb.cursor()
-        mycursor.execute(sql)
-        myresult = mycursor.fetchall()
-        for x in myresult:
-            daily_clouds=x[0]
-            
-        if daily_clouds <= clouds_limit_0:
-            logging.info("... daily_clouds: " + str(daily_clouds) + "% - normal limit")
-            ErrorPrint("Info : CMS - WT: clouds "+ str(daily_clouds) + "% - normal limit")
-        if daily_clouds > clouds_limit_0 and daily_clouds <= clouds_limit_1:
-            minigrid_pos = 1 # second position in the table 
-            backup_pos   = 1 # second position in the table 
-            logging.info("... daily_clouds: " + str(daily_clouds) + "% - above limit 1")
-            ErrorPrint("Info : CMS - WT: clouds "+ str(daily_clouds) + "% - above limit 1")
-        if daily_clouds > clouds_limit_1 and daily_clouds <= clouds_limit_2:
-            minigrid_pos = 2 # second position in the table 
-            backup_pos   = 2 # second position in the table 
-            logging.info("... daily_clouds: " + str(daily_clouds) + "% - above limit 2")
-            ErrorPrint("Info : CMS - WT: clouds "+ str(daily_clouds) + "% - above limit 2")
-        if daily_clouds > clouds_limit_2:
-            OutBack_Sched_1_AC_Mode_WT=4
-            OutBack_Sched_2_AC_Mode_WT=4
-            OutBack_Sched_3_AC_Mode_WT=65535
-            logging.info("... daily_clouds: " + str(daily_clouds) + "% - above limit 3")
-            ErrorPrint("Info : CMS - WT: clouds "+ str(daily_clouds) + "% - above limit 3")
+            Sched_1_AC_Mode = ACmode_list[OutBack_Sched_1_AC_Mode]
+        
+        if Sched_1_AC_Mode_local == "Disabled":
+            OutBack_Sched_1_AC_Mode_local = 65535
+        elif Sched_1_AC_Mode_local not in ACmode_list :
+            OutBack_Sched_1_AC_Mode_local = None
+        else:
+            OutBack_Sched_1_AC_Mode_local = ACmode_list.index(Sched_1_AC_Mode_local)
+        
+        logging.info(".... schedule_1 [h:mm] " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " + str(Sched_1_AC_Mode))
+        
+       
+        # autoscheduling 1 -- write OutBack_Sched_1_AC_Mode registry
+        if  Sched_1_AC_Mode_local != "notset" and Sched_1_AC_Mode_local in ACmode_list and OutBack_Sched_1_AC_Mode != OutBack_Sched_1_AC_Mode_local:
+            rw = client.write_register(reg + 409, OutBack_Sched_1_AC_Mode_local)
+            logging.info(".... updating sch_1 to: " + str(Sched_1_AC_Mode_local))
+            Sched_1_AC_Mode_flag = 1
+        else:
+            Sched_1_AC_Mode_flag = 0
+        # autoscheduling 1 -- write OutBack_Sched_1_AC_Mode_Hour registry    
+        if  OutBack_Sched_1_AC_Mode_Hour_local != "notset" and OutBack_Sched_1_AC_Mode_Hour_local in range(24) and OutBack_Sched_1_AC_Mode_Hour != OutBack_Sched_1_AC_Mode_Hour_local:
+            rw = client.write_register(reg + 410, OutBack_Sched_1_AC_Mode_Hour_local)
+            logging.info(".... updating sch_1 hour : " + str(OutBack_Sched_1_AC_Mode_Hour_local))
+            Sched_1_AC_Mode_Hour_flag = 1
+        else:
+            Sched_1_AC_Mode_Hour_flag = 0
 
-        mycursor.close()
-        mydb.close()
-        logging.info(".. MariaDB closed")
+        # autoscheduling 2 -- reading registries
+        response = client.read_holding_registers(reg + 412, 1)
+        OutBack_Sched_2_AC_Mode = response.registers[0]
+        response = client.read_holding_registers(reg + 413, 1)                
+        OutBack_Sched_2_AC_Mode_Hour = response.registers[0]
+        response = client.read_holding_registers(reg + 414, 1)
+        OutBack_Sched_2_AC_Mode_Minute = response.registers[0]
+        
+        if OutBack_Sched_2_AC_Mode == 65535:
+            Sched_2_AC_Mode = ACmode_list[OutBack_Sched_2_AC_Mode-65528]
+        else:
+            Sched_2_AC_Mode = ACmode_list[OutBack_Sched_2_AC_Mode]
+        
+        if Sched_2_AC_Mode_local == "Disabled":
+            OutBack_Sched_2_AC_Mode_local = 65535
+        elif Sched_2_AC_Mode_local not in ACmode_list :
+            OutBack_Sched_2_AC_Mode_local = None           
+        else:
+            OutBack_Sched_2_AC_Mode_local = ACmode_list.index(Sched_2_AC_Mode_local)
+       
+        logging.info(".... schedule_2 [h:mm] " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " + str(Sched_2_AC_Mode))
+        
+        # autoscheduling 2 -- write OutBack_Sched_2_AC_Mode registry
+        if Sched_2_AC_Mode_local != "notset" and Sched_2_AC_Mode_local in ACmode_list and OutBack_Sched_2_AC_Mode != OutBack_Sched_2_AC_Mode_local:
+            rw = client.write_register(reg + 412, OutBack_Sched_2_AC_Mode_local)
+            logging.info(".... updating sch_2 to: " + str(Sched_2_AC_Mode_local))
+            Sched_2_AC_Mode_flag = 1
+        else:
+            Sched_2_AC_Mode_flag = 0
+            
+        # autoscheduling 2 -- write OutBack_Sched_2_AC_Mode_Hour registry    
+        if  OutBack_Sched_2_AC_Mode_Hour_local != "notset" and OutBack_Sched_2_AC_Mode_Hour_local in range(24) and OutBack_Sched_2_AC_Mode_Hour != OutBack_Sched_2_AC_Mode_Hour_local:
+            rw = client.write_register(reg + 413, OutBack_Sched_2_AC_Mode_Hour_local)
+            logging.info(".... updating sch_2 hour : " + str(OutBack_Sched_2_AC_Mode_Hour_local))
+            Sched_2_AC_Mode_Hour_flag = 1
+        else:
+            Sched_2_AC_Mode_Hour_flag = 0 
+ 
+        # autoscheduling 3 -- reading registries
+        response = client.read_holding_registers(reg + 415, 1)
+        OutBack_Sched_3_AC_Mode = response.registers[0]
+        response = client.read_holding_registers(reg + 416, 1)                
+        OutBack_Sched_3_AC_Mode_Hour = response.registers[0]
+        response = client.read_holding_registers(reg + 417, 1)
+        OutBack_Sched_3_AC_Mode_Minute = response.registers[0]
+        
+        if OutBack_Sched_3_AC_Mode == 65535:
+            Sched_3_AC_Mode = ACmode_list[OutBack_Sched_3_AC_Mode-65528]
+        else:
+            Sched_3_AC_Mode = ACmode_list[OutBack_Sched_3_AC_Mode]
+        
+        if Sched_3_AC_Mode_local == "Disabled":
+            OutBack_Sched_3_AC_Mode_local = 65535
+        elif Sched_3_AC_Mode_local not in ACmode_list :
+            OutBack_Sched_3_AC_Mode_local = None           
+        else:
+            OutBack_Sched_3_AC_Mode_local = ACmode_list.index(Sched_3_AC_Mode_local)
+        
+        logging.info(".... schedule_3 [h:mm] " + str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " + str(Sched_3_AC_Mode))
+        
+        # autoscheduling 3 -- write OutBack_Sched_3_AC_Mode registry
+        if Sched_3_AC_Mode_local != "notset" and Sched_3_AC_Mode_local in ACmode_list and OutBack_Sched_3_AC_Mode != OutBack_Sched_3_AC_Mode_local:
+            rw = client.write_register(reg + 415, OutBack_Sched_3_AC_Mode_local)
+            logging.info(".... updating sch_3 to: " + str(Sched_3_AC_Mode_local))
+            Sched_3_AC_Mode_flag = 1
+        else:
+            Sched_3_AC_Mode_flag = 0
+            
+        # autoscheduling 3 -- write OutBack_Sched_3_AC_Mode_Hour registry    
+        if  OutBack_Sched_3_AC_Mode_Hour_local != "notset" and OutBack_Sched_3_AC_Mode_Hour_local in range(24) and OutBack_Sched_3_AC_Mode_Hour != OutBack_Sched_3_AC_Mode_Hour_local:
+            rw = client.write_register(reg + 416, OutBack_Sched_3_AC_Mode_Hour_local)
+            logging.info(".... updating sch_3 hour : " + str(OutBack_Sched_3_AC_Mode_Hour_local))
+            Sched_3_AC_Mode_Hour_flag = 1
+        else:
+            Sched_3_AC_Mode_Hour_flag = 0
+ 
+        if Sched_1_AC_Mode_flag == 0 and Sched_1_AC_Mode_Hour_flag == 0 and\
+           Sched_2_AC_Mode_flag == 0 and Sched_2_AC_Mode_Hour_flag == 0 and\
+           Sched_3_AC_Mode_flag == 0 and Sched_3_AC_Mode_Hour_flag == 0:
+                       
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_1_ac_mode"]        = "notset"
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_1_ac_mode_hour"]   = "notset"
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_1_ac_mode_minute"] = "notset"
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_2_ac_mode"]        = "notset"
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_2_ac_mode_hour"]   = "notset"
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_2_ac_mode_minute"] = "notset"
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode"]        = "notset"
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode_hour"]   = "notset"
+            dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode_minute"] = "notset"
+            dinamic_data["OutbackBlock"]["OutbackBlock_flag"]                          = 0
+            OutbackBlock_flag                    = 0
+            break
+        else:
+            loop = loop + 1
+            logging.info(".... verification loop " +  str(loop))
+
+    if OutbackBlock_flag == 0:
+        logging.info(".... verification completed in " + str(loop) +" loop: all good")
+        EventLog("Info : CMS - sch_1 to " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " + str(Sched_1_AC_Mode))
+        EventLog("Info : CMS - sch_2 to " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " + str(Sched_2_AC_Mode))
+        EventLog("Info : CMS - sch_3 to " + str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " + str(Sched_3_AC_Mode))
+    else:
+        logging.info(".... verification failed")
+        EventLog("Info : CMS - update failed")
     
-    except:
-        logging.info(".. MariaDB connection failed")
-        ErrorPrint("Error: CMS - MariaDB connection failed")
+    dinamic_data["time_taken"] = str(curent_date_time.strftime("%Y-%m-%d %H:%M:%S"))
     
+    with open(working_dir +'/dinamic_data.json', 'w') as outfile:
+        json.dump(dinamic_data, outfile, indent=1)
+    
+    return
+
+def OutbackSystemControlBlock():
+    global OutbackSystemControlBlock_flag
+    loop = 0
+    while loop <= 3 :
+        response = client.read_holding_registers(reg + 5, 1)
+        OB_Charge_Enable_Disable = int(response.registers[0])
+        logging.info(".... Curent charging mode " + Charge_Enable_Disable_list[OB_Charge_Enable_Disable])
+        
+        if OB_Charge_Enable_Disable_local in Charge_Enable_Disable_list and OB_Charge_Enable_Disable_local != Charge_Enable_Disable_list[OB_Charge_Enable_Disable]:
+            rw = client.write_register(reg + 5, Charge_Enable_Disable_list.index(OB_Charge_Enable_Disable_local))
+            logging.info("......updating charging mode to: " + OB_Charge_Enable_Disable_local)
+            EventLog("Info : CMS - updating charging mode to: " + OB_Charge_Enable_Disable_local)
+            Charge_Enable_Disable_flag = 1
+        else:    
+            Charge_Enable_Disable_flag = 0
+            dinamic_data["OutbackSystemControlBlock"]["Charge_Enable_Disable"] = "notset"
+       
+        if Charge_Enable_Disable_flag == 0 :
+            dinamic_data["OutbackSystemControlBlock"]["OutbackSystemControlBlock_flag"] = 0           
+            OutbackSystemControlBlock_flag = 0
+            break
+        else:
+            loop = loop + 1
+            logging.info(".... verification loop " +  str(loop))
+    
+    return
+
+def RadianInverterConfigurationBlock():
+    global InverterConfigurationBlock_flag
+    loop = 0
+    while loop <= 3 :
+        #GSconfig_Charger_Operating_Mode
+        response = client.read_holding_registers(reg + 24, 1)
+        GSconfig_Charger_Operating_Mode = int(response.registers[0])
+        logging.info(".... FXR Charger Mode " + str(GSconfig_Charger_Operating_Mode))
+        
+        Charger_Operating_Mode='None'
+        if GSconfig_Charger_Operating_Mode == 0:   Charger_Operating_Mode ='off'
+        if GSconfig_Charger_Operating_Mode == 1:   Charger_Operating_Mode ='on'
+        
+        if Charger_Operating_Mode_local != "notset" and Charger_Operating_Mode != Charger_Operating_Mode_local:
+            if Charger_Operating_Mode_local == 'on':   GSconfig_Charger_Operating_Mode_SC = 1
+            if Charger_Operating_Mode_local == 'off':  GSconfig_Charger_Operating_Mode_SC = 0
+            rw = client.write_register(reg + 24, GSconfig_Charger_Operating_Mode_SC)
+            Charger_Operating_Mode = GSconfig_Charger_Operating_Mode_SC
+            logging.info("......updating AC charging to: " + str(Charger_Operating_Mode_local))
+            EventLog("Info : CMS - updating AC charging to: " + str(Charger_Operating_Mode_local))
+            Charger_Operating_Mode_flag = 1
+            #if MQTT_active=='true' : publish.single('home-assistant/solar/solar_Charger_Operating_Mode', Charger_Operating_Mode_local, hostname=MQTT_broker)
+        else:    
+            Charger_Operating_Mode_flag = 0
+            dinamic_data["RadianInverterConfigurationBlock"]["charger_operating_mode"] = "notset"
+        
+        # GSconfig_Grid_Input_Mode
+        response = client.read_holding_registers(reg + 26, 1)
+        GSconfig_Grid_Input_Mode = int(response.registers[0])
+        logging.info(".... FXR Input mode " + ACmode_list[GSconfig_Grid_Input_Mode])
+        
+        if Grid_Input_Mode_local in ACmode_list and GSconfig_Grid_Input_Mode != ACmode_list.index(Grid_Input_Mode_local):                    
+            rw = client.write_register(reg + 26, ACmode_list.index(Grid_Input_Mode_local))
+            logging.info("......updating AC mode to: " + Grid_Input_Mode_local)
+            EventLog("Info : CMS - updating AC mode to: " + Grid_Input_Mode_local)
+            Grid_Input_Mode_flag = 1
+            #if MQTT_active=='true' : publish.single('home-assistant/solar/solar_grid_input_mode', Grid_Input_Mode_local, hostname=MQTT_broker)
+        else:    
+            Grid_Input_Mode_flag = 0
+            dinamic_data["RadianInverterConfigurationBlock"]["grid_input_mode"] = "notset"
+       
+        if Grid_Input_Mode_flag == 0 and Charger_Operating_Mode_flag == 0:
+            dinamic_data["RadianInverterConfigurationBlock"]["InverterConfigurationBlock_flag"] = 0           
+            InverterConfigurationBlock_flag = 0
+            break
+        else:
+            loop = loop + 1
+            logging.info(".... verification loop " +  str(loop))
+    
+    if InverterConfigurationBlock_flag == 0:
+        logging.info(".... verification completed in " + str(loop) +" loop: all good")
+    else:
+        logging.info(".... verification failed")
+        EventLog("Info : CMS - update failed")
+        
+    dinamic_data["time_taken"] = str(curent_date_time.strftime("%Y-%m-%d %H:%M:%S"))
+    
+    with open(working_dir +'/dinamic_data.json', 'w') as outfile:
+        json.dump(dinamic_data, outfile, indent=1)    
+
+    return 
+
+def FLEXnetDCRealTimeBlock():
+    logging.info(".. Detect a FLEXnet-DC Real Time Block")  
+    return
+
+
+# =======================================This is the main loop =====================================
 print("------------------------------------------------")
 print(" MATE3 ModBus Interface")
 print("------------------------------------------------")
 
 # Try to build the mate3 MODBUS connection
-logging.info("Building MATE3 MODBUS connection")
-# Mate3 connection
 try:
+    logging.info("Building MATE3 MODBUS connection")
     logging.info(".. waiting 10 seconds ")
     time.sleep(10)
     client = ModbusClient(mate3_ip, mate3_modbus)
     logging.info(".. Make sure we are indeed connected to an Outback power system")
     reg    = sunspec_start_reg
     size   = getSunSpec(reg)
-    #print(reg) #DPO debug
-    #print(size) #DPO debug
     if size is None:
         logging.info("We have failed to detect an Outback system. Exciting")
+        client.close()
         exit()
 except:
     client.close()
-    ErrorPrint("Error: CMS - Fail to connect to MATE")
+    EventLog("Error: CMS - Fail to connect to MATE")
     logging.info(".. Failed to connect to MATE3. Enable SUNSPEC and check port. Exciting")
     exit()
 logging.info(".. Connected OK to an Outback system")
 
-#This is the main loop
-#--------------------------------------------------------------
+# scanning blocks
 startReg = reg + size + 4
 while True:
     reg = startReg
+    check = 0
     for block in range(0, 30):
         blockResult = getBlock(reg)
-        # Mate 3 block
-        try:     
-            if "Outback block" in blockResult['DID'] :
-         
-                # autosheduling 1
-                # ...reading OutBack_Sched_1_AC_Mode registry
-                response = client.read_holding_registers(reg + 409, 1)
-                OutBack_Sched_1_AC_Mode = response.registers[0]
+        
+        if "Outback block" in blockResult['DID']:
+            logging.info(".. Detect a Outback Block")
+            if OutbackBlock_flag == 1: OutbackBlock()
+            
+        if "Outback System Control Block" in blockResult['DID']:
+            logging.info(".. Detect a Outback System Control Block")
+            if OutbackSystemControlBlock_flag == 1: OutbackSystemControlBlock()
+            
+        if "Radian Inverter Configuration Block" in blockResult['DID']: 
+            logging.info(".. Detect a FXR inverter")
+            RadianInverterConfigurationBlock()
 
-                if OutBack_Sched_1_AC_Mode == 65535:                                          # section is just for pretty display of the value
-                    Sched_1_AC_Mode = ACmode_list[OutBack_Sched_1_AC_Mode-65528]
-                else:
-                    Sched_1_AC_Mode = ACmode_list[OutBack_Sched_1_AC_Mode]
-                    
-                if OutBack_Sched_1_AC_Mode_WT == 65535:                                        # section is just for pretty display of the value for Weather trigger Sched_1_AC_Mode_WT
-                    Sched_1_AC_Mode_WT = ACmode_list[OutBack_Sched_1_AC_Mode_WT-65528]
-                else:
-                    Sched_1_AC_Mode_WT = ACmode_list[OutBack_Sched_1_AC_Mode_WT]                    
-             
-                response = client.read_holding_registers(reg + 410, 1)                
-                OutBack_Sched_1_AC_Mode_Hour = response.registers[0]
-                response = client.read_holding_registers(reg + 411, 1)
-                OutBack_Sched_1_AC_Mode_Minute = response.registers[0]
-                logging.info(".... Outback sch1 [h:mm] " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " +str(Sched_1_AC_Mode))
-                
-                if smart_scheduling =="true" and OutBack_Sched_1_AC_Mode != OutBack_Sched_1_AC_Mode_WT:
-                    rw = client.write_register(reg + 409, OutBack_Sched_1_AC_Mode_WT)
-                    logging.info("......updating Mode 1 to: " + str(Sched_1_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - updating Mode 1 to: " + str(Sched_1_AC_Mode_WT))
-                    Sched_1_check_flag = 1
-                else:
-                    Sched_1_check_flag = 0
-                    
-                if smart_scheduling =="true" and Sched_1_AC_Mode=="MiniGrid" and OutBack_Sched_1_AC_Mode_Hour != minigrid_start[now.month-1][minigrid_pos]:
-                    rw = client.write_register(reg + 410, minigrid_start[now.month-1][minigrid_pos])
-                    logging.info(".....updating start hour : " + str(minigrid_start[now.month-1][minigrid_pos]))
-                    ErrorPrint("Info : CMS - updating MiniGrid start at " + str(minigrid_start[now.month-1][minigrid_pos]))
-                    Sched_1_check_flag1 = 1
-                else:
-                    Sched_1_check_flag1 = 0
-
-                # autosheduling 2
-                response = client.read_holding_registers(reg + 412, 1)
-                OutBack_Sched_2_AC_Mode = response.registers[0]
-                
-                if OutBack_Sched_2_AC_Mode == 65535:                                          # section is just for pretty display of the value
-                    Sched_2_AC_Mode = ACmode_list[OutBack_Sched_2_AC_Mode-65528]
-                else:
-                    Sched_2_AC_Mode = ACmode_list[OutBack_Sched_2_AC_Mode]
-                    
-                if OutBack_Sched_2_AC_Mode_WT == 65535:                                        # section is just for pretty display of the value for Weather trigger Sched_2_AC_Mode_WT
-                    Sched_2_AC_Mode_WT = ACmode_list[OutBack_Sched_2_AC_Mode_WT-65528]
-                else:
-                    Sched_2_AC_Mode_WT = ACmode_list[OutBack_Sched_2_AC_Mode_WT]                    
-                
-                response = client.read_holding_registers(reg + 413, 1)
-                OutBack_Sched_2_AC_Mode_Hour = response.registers[0]
-                response = client.read_holding_registers(reg + 414, 1)
-                OutBack_Sched_2_AC_Mode_Minute = response.registers[0]
-                logging.info(".... Outback sch2 [h:mm] " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " +str(Sched_2_AC_Mode))
-                
-                if smart_scheduling =="true" and OutBack_Sched_2_AC_Mode != OutBack_Sched_2_AC_Mode_WT:
-                    rw = client.write_register(reg + 412, OutBack_Sched_2_AC_Mode_WT)
-                    logging.info("......updating Mode 2 to: " + str(Sched_2_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - updating Mode 2 to: " + str(Sched_2_AC_Mode_WT))
-                    Sched_2_check_flag = 1
-                else:
-                    Sched_2_check_flag = 0
-
-                if smart_scheduling =="true" and Sched_2_AC_Mode=="Backup" and OutBack_Sched_2_AC_Mode_Hour != backup_start[now.month-1][backup_pos]:
-                    rw = client.write_register(reg + 413, backup_start[now.month-1][backup_pos])
-                    logging.info(".....updating start hour : " + str(backup_start[now.month-1][backup_pos]))
-                    ErrorPrint("Info : CMS - updating Backup   start at "+ str(backup_start[now.month-1][backup_pos]))
-                    Sched_2_check_flag1 = 1
-                else:
-                    Sched_2_check_flag1 = 0                   
-                
-                # schedule 3 
-                response = client.read_holding_registers(reg + 415, 1)
-                OutBack_Sched_3_AC_Mode = response.registers[0]
-                
-                if OutBack_Sched_3_AC_Mode == 65535:                                          # section is just for pretty display of the value
-                    Sched_3_AC_Mode = ACmode_list[OutBack_Sched_3_AC_Mode-65528]
-                else:
-                    Sched_3_AC_Mode = ACmode_list[OutBack_Sched_3_AC_Mode]
-                    
-                if OutBack_Sched_3_AC_Mode_WT == 65535:                                        # section is just for pretty display of the value for Weather trigger Sched_2_AC_Mode_WT
-                    Sched_3_AC_Mode_WT = ACmode_list[OutBack_Sched_3_AC_Mode_WT-65528]
-                else:
-                    Sched_3_AC_Mode_WT = ACmode_list[OutBack_Sched_3_AC_Mode_WT]      
-
-                response = client.read_holding_registers(reg + 416, 1)
-                OutBack_Sched_3_AC_Mode_Hour = response.registers[0]
-                response = client.read_holding_registers(reg + 417, 1)
-                OutBack_Sched_3_AC_Mode_Minute = response.registers[0]
-                logging.info(".... Outback sch3 [h:mm] " + str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " +str(Sched_3_AC_Mode))
-               
-                if smart_scheduling =="true" and OutBack_Sched_3_AC_Mode != OutBack_Sched_3_AC_Mode_WT:
-                    rw = client.write_register(reg + 415, OutBack_Sched_3_AC_Mode_WT)
-                    logging.info("......updating Mode 3 to: " + str(Sched_3_AC_Mode_WT))
-                    ErrorPrint("Info : CMS - updating Mode 3 to: " + str(Sched_3_AC_Mode_WT))
-                    Sched_3_check_flag = 1
-                else:
-                    Sched_3_check_flag = 0
-                    
-                if smart_scheduling =="true" and Sched_3_AC_Mode=="Backup" and OutBack_Sched_3_AC_Mode_Hour != backup_start[now.month-1][backup_pos]:
-                    rw = client.write_register(reg + 416, backup_start[now.month-1][backup_pos])
-                    logging.info(".....updating start hour : " + str(backup_start[now.month-1][backup_pos]))
-                    ErrorPrint("Info : CMS - updating Backup   start at "+ str(backup_start[now.month-1][backup_pos]))
-                    Sched_3_check_flag1 = 1
-                else:
-                    Sched_3_check_flag1 = 0
-
-# smart charging - SC
-# read actual charge mode,SOC, compare with config values or the value modified by SOC routine below
-            if "Radian Inverter Configuration Block" in blockResult['DID']:
-                logging.info(".. Detect a FXR inverter") 
-                response = client.read_holding_registers(reg + 24, 1)
-                GSconfig_Charger_Operating_Mode = int(response.registers[0])
-                logging.info(".... FXR Charger Mode " + str(GSconfig_Charger_Operating_Mode))
-                charger_mode='None'
-                if GSconfig_Charger_Operating_Mode == 0:   charger_mode ='off'
-                if GSconfig_Charger_Operating_Mode == 1:   charger_mode ='on'
-                
-                if charger_flag == 1 and charger_mode != charger_mode_sc:
-                    if charger_mode_sc == 'on':   GSconfig_Charger_Operating_Mode_SC = 1
-                    if charger_mode_sc == 'off':  GSconfig_Charger_Operating_Mode_SC = 0
-                    rw = client.write_register(reg + 24, GSconfig_Charger_Operating_Mode_SC)
-                    charger_mode = GSconfig_Charger_Operating_Mode_SC
-                    logging.info("......updating AC charging to: " + str(charger_mode_sc))
-                    ErrorPrint("Info : CMS - updating AC charging to: " + str(charger_mode_sc))
-                    charger_flag = 1
-                else:    
-                    charger_flag = 0
-                
-                response = client.read_holding_registers(reg + 26, 1)
-                GSconfig_Grid_Input_Mode = int(response.registers[0])
-                logging.info(".... FXR Input mode " + ACmode_list[GSconfig_Grid_Input_Mode])
-                if ac_mode_flag == 1 and GSconfig_Grid_Input_Mode != ACmode_list.index(ac_mode_sc):                    
-                    rw = client.write_register(reg + 26, ACmode_list.index(ac_mode_sc))
-                    logging.info("......updating AC mode to: " + ac_mode_sc)
-                    ErrorPrint("Info : CMS - updating AC mode to: " + ac_mode_sc)
-                    ac_mode_flag = 1
-                else:    
-                    ac_mode_flag = 0
-
-#FLEXNET Block            
-            if "FLEXnet-DC Real Time Block" in blockResult['DID']:
-                logging.info(".. Detect a FLEXnet-DC Real Time Block")   
-                response = client.read_holding_registers(reg + 27, 1)
-                fn_state_of_charge = int(response.registers[0])
-                logging.info(".... FN State of Charge " + str(fn_state_of_charge))
-                
-                if smart_charge =="true" and fn_state_of_charge <= soc_min and charger_mode == 'off':
-                    charger_mode_sc = 'on'
-                    logging.info("......SOC below min limit " + str(fn_state_of_charge))
-                    ErrorPrint("Info : CMS - SC: SOC " + str(fn_state_of_charge) + "% - below min limit")
-                    charger_flag = 1
-                elif smart_charge =="true" and fn_state_of_charge >= soc_ok and charger_mode == 'on':
-                    charger_mode_sc = 'off'
-                    logging.info("......SOC reached safe limit " + str(fn_state_of_charge))
-                    ErrorPrint("Info : CMS - SC: SOC " + str(fn_state_of_charge) + "% - safe limit")
-                    charger_flag = 1
-
-        except:
-            ErrorPrint("Error: CMS - unknown error in main block") 
-
+        if "FLEXnet-DC Real Time Block" in blockResult['DID']: FLEXnetDCRealTimeBlock()
+        
         if "End of SunSpec" not in blockResult['DID']:
             reg = reg + blockResult['size'] + 2
         else:
-            #client.close()
-            #logging.info(".. Mate connection closed ")
             break
-
-    if Sched_1_check_flag == 0 and Sched_1_check_flag1 == 0 and Sched_2_check_flag == 0 and Sched_2_check_flag1 ==0 and \
-       Sched_3_check_flag == 0 and Sched_3_check_flag1 == 0 and charger_flag == 0 and ac_mode_flag == 0:
+    write=0 
+    if write == 0:
         if loop >0:
             logging.info(".. verification completed in " + str(loop) +" loop: all good")
-            ErrorPrint("Info : CMS - update completed")
+            EventLog("Info : CMS - update completed")
         client.close()
         logging.info(".. Mate connection closed ")
         logging.info("Exiting ")
@@ -545,4 +558,4 @@ while True:
         logging.info(".. verification loop " +  str(loop))
         time.sleep(1)
         loop = loop + 1 # only for reporting purpose
-   
+    
