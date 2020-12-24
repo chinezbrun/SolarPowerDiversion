@@ -29,3 +29,4 @@ version history
                               usage of arguments same functionality like in 0.5.2
 0.6.1 20200712     - minor  - bug fixed - when argument is provided the other json lists are ignored
 0.7.0 20200902     - major  - new functionality - update json, extended the list of arguments - force bulk and EQ 
+0.7.1 20201224     - minor  - enhancement - list of valid argumentes changed for better integration with HA 
