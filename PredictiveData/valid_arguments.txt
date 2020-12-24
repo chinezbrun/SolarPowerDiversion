@@ -3,8 +3,8 @@ change specific parameter in the mate by opening ChangeMateStatus with an argume
 ChangeMateStatusModBus.py argument 
 
 # arguments list:
- on          # turn on  inverter's charger
- off         # turn off inverter's charger
+ On          # turn on  inverter's charger
+ Off         # turn off inverter's charger
  drop        # drop AC
  use         # use AC
  Generator   # switch AC mode to 
