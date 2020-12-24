@@ -10,7 +10,7 @@ from configparser import ConfigParser
 #import paho.mqtt.publish as publish
 import sys, os
 
-script_ver = "0.7.0_20200902"
+script_ver = "0.7.1_20201224"
 print ("script version   : "+ script_ver)
 
 curent_date_time  = datetime.now()
@@ -72,7 +72,7 @@ print("variables initialization completed")
 # external python arguments - this has priority, dinamic_data will be overwriten
 if len(sys.argv) > 1:
     
-    if sys.argv[1] == 'on' or sys.argv[1] == 'off':
+    if sys.argv[1] == 'On' or sys.argv[1] == 'Off':
         Charger_Operating_Mode_local    = sys.argv[1] # new value received 
         OutbackBlock_flag = 0                         # to prevent conflicts
         OutbackSystemControlBlock_flag  = 0
@@ -437,12 +437,12 @@ def RadianInverterConfigurationBlock():
         logging.info(".... FXR Charger Mode " + str(GSconfig_Charger_Operating_Mode))
         
         Charger_Operating_Mode='None'
-        if GSconfig_Charger_Operating_Mode == 0:   Charger_Operating_Mode ='off'
-        if GSconfig_Charger_Operating_Mode == 1:   Charger_Operating_Mode ='on'
+        if GSconfig_Charger_Operating_Mode == 0:   Charger_Operating_Mode ='Off'
+        if GSconfig_Charger_Operating_Mode == 1:   Charger_Operating_Mode ='On'
         
         if Charger_Operating_Mode_local != "notset" and Charger_Operating_Mode != Charger_Operating_Mode_local:
-            if Charger_Operating_Mode_local == 'on':   GSconfig_Charger_Operating_Mode_SC = 1
-            if Charger_Operating_Mode_local == 'off':  GSconfig_Charger_Operating_Mode_SC = 0
+            if Charger_Operating_Mode_local == 'On':   GSconfig_Charger_Operating_Mode_SC = 1
+            if Charger_Operating_Mode_local == 'Off':  GSconfig_Charger_Operating_Mode_SC = 0
             rw = client.write_register(reg + 24, GSconfig_Charger_Operating_Mode_SC)
             Charger_Operating_Mode = GSconfig_Charger_Operating_Mode_SC
             logging.info("......updating AC charging to: " + str(Charger_Operating_Mode_local))
