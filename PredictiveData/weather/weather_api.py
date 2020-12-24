@@ -3,40 +3,54 @@ import json
 import pprint                        # DPO debug - doar pentru a vizualiza JSON - nu este mandatory
 from datetime import datetime
 import mysql.connector as mariadb
+from configparser import ConfigParser
+import sys, os
 
-script_ver = "0.2.1_20200222"
+script_ver = "0.4.0_20201030"
 print("script ver  :" + script_ver)
 
-host       ="192.168.0.100"
-db_port    ="3307"
-user       ="arduino" 
-password   ='arduinotest'
-database   ='weather'
+curent_date_time  = datetime.now()
+curent_month      = curent_date_time.strftime("%B")
+#print(curent_month)
+#print(curent_date_time.hour)                   # DPO debug only
+#print (curent_date_time.hour)                  # DPO debug only
+#print (curent_date_time.day)                   # DPO debug only
 
-mydb       = mariadb.connect(host=host,port=db_port,user=user,password=password,database=database)
-r          = requests.get('http://api.openweathermap.org/data/2.5/forecast?id=683506&APPID=2ab7224dd023269296389b449fd32057')
-data       = r.json()
-#pprint.pprint(data)                 # DPO debug - doar pentru a vizualiza JSON - nu este mandatory
-today      = datetime.now()
-#print (today.hour)                  # DPO debug only
-#print (today.day)                   # DPO debug only
+pathname          = os.path.dirname(sys.argv[0])
+working_dir       = os.path.abspath(pathname) 
+print ("working directory: " +  working_dir)
+
+# import configuartion variables       
+config            = ConfigParser()
+config.read(working_dir +'/weather_api.cfg')
+OutputPath        = config.get('Connectivity', 'OutputPath')
+host              = config.get('Connectivity', 'host')
+db_port           = config.get('Connectivity', 'db_port')
+user              = config.get('Connectivity', 'user')
+password          = config.get('Connectivity', 'password')
+database          = config.get('Connectivity', 'database')
+weather_api_token = config.get('Connectivity', 'weather_api_token')
+smart_weather     = config.get('smart_weather', 'smart_weather')
+clouds_limit_0    = int(config.get('smart_weather', 'clouds_limit_0'))
+clouds_limit_1    = int(config.get('smart_weather', 'clouds_limit_1'))
+clouds_limit_2    = int(config.get('smart_weather', 'clouds_limit_2'))
+
+mydb              = mariadb.connect(host=host,port=db_port,user=user,password=password,database=database)
+r                 = requests.get(weather_api_token)
+weather           = r.json()
+dinamic_data      = json.load(open(OutputPath +'/dinamic_data.json'))
+flextime_data     = json.load(open(working_dir +'/flextime_data.json'))
+print ("Output directory: " +  OutputPath)
+#pprint.pprint(weather)                         # DPO debug - doar pentru a vizualiza JSON - nu este mandatory
+#pprint.pprint(dinamic_data)
 
 for n in range(9):
-    ID                 = data ["list"][n]["weather"][0]["id"]
-    main               = data ["list"][n]["weather"][0]["main"]
-    description        = data ["list"][n]["weather"][0]["description"]
-    clouds             = data ["list"][n]["clouds"]["all"]
-    stamp              = data ["list"][n]["dt_txt"]
+    ID            = weather ["list"][n]["weather"][0]["id"]
+    main          = weather ["list"][n]["weather"][0]["main"]
+    description   = weather ["list"][n]["weather"][0]["description"]
+    clouds        = weather ["list"][n]["clouds"]["all"]
+    stamp         = weather ["list"][n]["dt_txt"]
     
-    #print("------------------------------------------")
-    #print ("ID           : " + str(ID))
-    #print ("stamp        : " + str(stamp))
-    #print ("general      : " + str(main))
-    #print ("descriere    : " + str(description))
-    #print ("nori         : " + str(clouds) + "%")
-    #print ("avg nori     : " + str(avg_clouds) +"%")
-    #print ("...")
-
     sql="SELECT date,ID,main,description,clouds from weather.forecast where date = '" + stamp +"'"
     mycursor = mydb.cursor()
     mycursor.execute(sql)
@@ -56,19 +70,20 @@ for n in range(9):
     mydb.commit()   
 
 # summary table update based on time of the day
-if today.hour > 0 and today.hour < 12:
-    sql="SELECT avg(clouds), date from forecast where date(date) = date(now()) and hour(date) > 3 and hour(date) < 21"
+if curent_date_time.hour > 0 and curent_date_time.hour < 12:
+    sql="SELECT avg(clouds), date, avg(ID) from forecast where date(date) = date(now()) and hour(date) > 6 and hour(date) < 18"
 else:
-    sql="SELECT avg(clouds), date from forecast where date(date) > date(now()) and hour(date) > 3 and hour(date) < 21"
+    sql="SELECT avg(clouds), date, avg(ID) from forecast where date(date) > date(now()) and hour(date) > 6 and hour(date) < 18"
    
 mycursor = mydb.cursor()
 mycursor.execute(sql)
 myresult = mycursor.fetchall()
 
 for x in myresult:
-    avg_clouds =x[0]
-    date=x[1]
-    
+    avg_clouds = x[0]
+    date       = x[1]
+    avg_ID     = x[2]
+
 if date:                            #DPO: run update summary only if results are available  
   
     date=date.strftime("%Y-%m-%d")
@@ -79,22 +94,70 @@ if date:                            #DPO: run update summary only if results are
     myresult = mycursor.fetchall()
 
     if not myresult:
-        val = (date,avg_clouds)
-        sql ="INSERT INTO weather.summary (date,daily_clouds) VALUES (%s,%s)"
-        print ("...summary insert :" + str(date) + " Avg :" + str(avg_clouds))
+        val = (date,avg_ID,avg_clouds)
+        sql ="INSERT INTO weather.summary (date,ID,daily_clouds) VALUES (%s,%s,%s)"
+        print ("...summary insert :" + str(date) + " Avg :" + str(avg_clouds) + " " + str(avg_ID))
     else:
-        val = (avg_clouds, date)
-        sql ="UPDATE weather.summary SET daily_clouds = %s WHERE date= %s"
-        print ("...summary updated  :" + str(date) + " Avg :" + str(avg_clouds))
+        val = (avg_ID, avg_clouds, date)
+        #sql ="UPDATE weather.summary SET daily_clouds = %s WHERE date= %s"
+        sql ="UPDATE weather.summary SET ID = %s, daily_clouds = %s WHERE date= %s"
+        print ("...summary updated  :" + str(date) + " Avg :" + str(avg_clouds) + " " + str(avg_ID))
 
     mycursor = mydb.cursor()
     mycursor.execute(sql, val)
     mydb.commit()
 
+print("------------------------------------------------")
+print(" Weather module")
+print("------------------------------------------------")
+
+# smart weather module
+if smart_weather == "true":
+    print("Weather module active. Checking forcast")
+    curent_month = curent_date_time.strftime("%B")
+    if curent_date_time.hour > 18:
+        sql="SELECT daily_clouds from summary where date = date(now() + INTERVAL 1 DAY)"
+    else:
+        sql="SELECT daily_clouds from summary where date = date(now())"
+    mycursor = mydb.cursor()
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        daily_clouds=x[0]
+      
+    if daily_clouds <= clouds_limit_0:
+        print("... daily_clouds: " + str(daily_clouds) + "% - normal limit")
+        level = 0
+    if daily_clouds > clouds_limit_0 and daily_clouds <= clouds_limit_1:
+        print("... daily_clouds: " + str(daily_clouds) + "% - above limit 1")
+        level = 1
+    if daily_clouds > clouds_limit_1 and daily_clouds <= clouds_limit_2:
+        print("... daily_clouds: " + str(daily_clouds) + "% - above limit 2")
+        level = 2
+    if daily_clouds > clouds_limit_2:
+        print("... daily_clouds: " + str(daily_clouds) + "% - above limit 3")
+        level = 3
+    
+    print("... curent month: "+curent_month)
+    dinamic_data["time_posted"]                                              = str(curent_date_time.strftime("%Y-%m-%d %H:%M:%S"))    
+    dinamic_data["time_taken"]                                               = ""
+    dinamic_data["OutbackBlock"]["OutbackBlock_flag"]                        = 1    
+    dinamic_data["OutbackBlock"]["outback_schedule"]["sched_1_ac_mode"]      = flextime_data["flextime"][curent_month][level]["sched_1_ac_mode"]
+    dinamic_data["OutbackBlock"]["outback_schedule"]["sched_1_ac_mode_hour"] = flextime_data["flextime"][curent_month][level]["sched_1_ac_mode_hour"]
+    dinamic_data["OutbackBlock"]["outback_schedule"]["sched_2_ac_mode"]      = flextime_data["flextime"][curent_month][level]["sched_2_ac_mode"]
+    dinamic_data["OutbackBlock"]["outback_schedule"]["sched_2_ac_mode_hour"] = flextime_data["flextime"][curent_month][level]["sched_2_ac_mode_hour"]
+    dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode"]      = flextime_data["flextime"][curent_month][level]["sched_3_ac_mode"]
+    dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode_hour"] = flextime_data["flextime"][curent_month][level]["sched_3_ac_mode_hour"]
+
+    mycursor.close()
+    mydb.close()
+    print(".. MariaDB closed")
+
 mycursor.close()
 mydb.close()
 
-with open('/volume1/web/SolarPowerDiversion/PredictiveData/weather/weather.json', 'w') as outfile:
-#from laptop
-#with open('weather.json', 'w') as outfile:
-    json.dump(data, outfile)
+
+with open(OutputPath +'/dinamic_data.json', 'w') as outfile:
+    json.dump(dinamic_data, outfile, indent=1)
+with open(working_dir +'/weather.json', 'w') as outfile:
+    json.dump(weather, outfile, indent=1)
