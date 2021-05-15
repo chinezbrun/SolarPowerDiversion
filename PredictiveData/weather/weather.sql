@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.9.0.1
+-- version 4.9.6
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Oct 12, 2019 at 11:49 PM
--- Server version: 10.3.11-MariaDB
--- PHP Version: 5.6.40
+-- Generation Time: May 15, 2021 at 09:29 PM
+-- Server version: 10.3.24-MariaDB
+-- PHP Version: 7.3.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -44,6 +44,8 @@ CREATE TABLE `forecast` (
 
 CREATE TABLE `summary` (
   `date` date NOT NULL,
+  `ID` int(11) NOT NULL,
+  `description` varchar(32) NOT NULL,
   `daily_clouds` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

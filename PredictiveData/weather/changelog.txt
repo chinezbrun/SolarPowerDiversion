@@ -1,9 +1,11 @@
-0.2.0 20191001     - initial relase
-0.2.1 20200222     - error correction of summary of the day calculation, based on time and current date
-0.3.0 20200606     - major changes in the script,
-                     flextime_schedule in json format,
-                     calculate schedule based on cloud level 0-2,
-                     export schedule in json format,
-0.3.1 20201011     - average clouds interval changed to 09-15:00
-0.4.0 20201030     - average Weather Conditions inserted in summary
+0.2.0 20191001  - initial relase
+0.2.1 20200222  - minor - error correction of summary of the day calculation, based on time and current date
+0.3.0 20200606  - major - functionality changes:
+                                         new script,flextime_schedule in json format
+                                         calculate schedule based on cloud level 0-2
+                                         export schedule in json format
+0.3.1 20201011  - minor - daily average clouds interval changed to 09-15:00
+0.4.0 20201030  - major - enhancements: average Weather Conditions inserted in summary
+0.5.0 20210515  - major - enhancements: weather info in dinamic.json now
+                                        weather description included in summary 
                 
