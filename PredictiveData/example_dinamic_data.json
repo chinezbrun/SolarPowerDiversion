@@ -1,0 +1,33 @@
+{
+ "time_posted": "2021-05-15 18:30:03",
+ "time_taken": "",
+ "weather": {
+  "date": "2021-05-15",
+  "ID": 601,
+  "description": "others",
+  "cloud_coverage": 38
+ },
+ "OutbackBlock": {
+  "OutbackBlock_flag": 1,
+  "outback_schedule": {
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 23,
+   "sched_1_ac_mode_minute": "notset",
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 18,
+   "sched_2_ac_mode_minute": "notset",
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0,
+   "sched_3_ac_mode_minute": "notset"
+  }
+ },
+ "OutbackSystemControlBlock": {
+  "OutbackSystemControlBlock_flag": 0,
+  "Charge_Enable_Disable": "notset"
+ },
+ "RadianInverterConfigurationBlock": {
+  "InverterConfigurationBlock_flag": 0,
+  "charger_operating_mode": "notset",
+  "grid_input_mode": "notset"
+ }
+}
