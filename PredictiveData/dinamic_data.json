@@ -1,17 +1,23 @@
 {
- "time_posted": "2020-09-25 20:00:04",
- "time_taken": "2020-09-25 20:30:03",
+ "time_posted": "2021-05-15 21:30:02",
+ "time_taken": "",
+ "weather": {
+  "date": "2021-05-16",
+  "ID": 601,
+  "description": "others",
+  "cloud_coverage": 56
+ },
  "OutbackBlock": {
-  "OutbackBlock_flag": 0,
+  "OutbackBlock_flag": 1,
   "outback_schedule": {
-   "sched_1_ac_mode": "notset",
-   "sched_1_ac_mode_hour": "notset",
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 23,
    "sched_1_ac_mode_minute": "notset",
-   "sched_2_ac_mode": "notset",
-   "sched_2_ac_mode_hour": "notset",
+   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 18,
    "sched_2_ac_mode_minute": "notset",
-   "sched_3_ac_mode": "notset",
-   "sched_3_ac_mode_hour": "notset",
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0,
    "sched_3_ac_mode_minute": "notset"
   }
  },
