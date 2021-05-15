@@ -6,11 +6,9 @@ from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from configparser import ConfigParser
-#import paho.mqtt.client as mqtt
-#import paho.mqtt.publish as publish
 import sys, os
 
-script_ver = "0.7.1_20201224"
+script_ver = "0.7.2_20210123"
 print ("script version   : "+ script_ver)
 
 curent_date_time  = datetime.now()
@@ -21,14 +19,15 @@ print ("working directory: " +  working_dir)
 config                               = ConfigParser()
 config.read(working_dir + '/ChangeMateStatusModBus.cfg')
 
-OutputPath                           = config.get('Connectivity', 'OutputPath')
-print("Output path      : " + OutputPath)
+output_path                           = config.get('Connectivity', 'output_path')
+print("output path      : " + output_path)
 
 mate3_ip                             = config.get('Connectivity', 'mate3_ip')
 mate3_modbus                         = config.get('Connectivity', 'mate3_modbus')
 sunspec_start_reg                    = 40000
 MQTT_active                          = config.get('Connectivity', 'MQTT_active')                        # default = false  -- if active will publish MQTT topics to varoius platforms i.e Home Assistant
 MQTT_broker                          = config.get('Connectivity', 'MQTT_broker')                        # your MQTT broker address - i.e 192.168.0.xxx
+debug                                = config.get('General', 'debug')
 
 # Dinamic Data
 dinamic_data                         = json.load(open(working_dir + '/dinamic_data.json'))
@@ -48,6 +47,8 @@ InverterConfigurationBlock_flag      = dinamic_data["RadianInverterConfiguration
 OB_Charge_Enable_Disable_local       = dinamic_data["OutbackSystemControlBlock"]["Charge_Enable_Disable"]
 OutbackSystemControlBlock_flag       = dinamic_data["OutbackSystemControlBlock"]["OutbackSystemControlBlock_flag"]
 loop                                 = 0 
+
+curent_date_time                     = datetime.now()
 
 # ACmode_list is used to convert numbers in pretty name -- in registry modes are coded like below:
 ACmode_list = [
@@ -94,27 +95,24 @@ if len(sys.argv) > 1:
         print("..'OB_Charge_Enable_Disable_local' was overwritten: ", OB_Charge_Enable_Disable_local)       
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y%m%d %H:%M:%S')
+if debug == "true":
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y%m%d %H:%M:%S')
 logging.getLogger(__name__)
 
-curent_date_time  = datetime.now()
-
 #error log subroutine
-def EventLog (str) :
+def EventLog (event) :
     try:
-        with open(OutputPath + "/data/general_info.log","r") as file:
+        with open(output_path + "/data/general_info.log","r") as file:
             save = file.read()
-        with open(OutputPath + "/data/general_info.log","w") as file:
-            file = open(OutputPath + "/data/general_info.log","a")
+        with open(output_path + "/data/general_info.log","w") as file:
+            file = open(output_path + "/data/general_info.log","a")
             file.write(curent_date_time.strftime("%d/%m/%Y %H:%M:%S "))
-            #file.write(str + "\r\n")
-            file.write(str + "\n")
-            #print(str)
-        with open(OutputPath + "/data/general_info.log","a") as file:
+            file.write(event + "\n")
+        with open(output_path + "/data/general_info.log","a") as file:
             file.write(save)
         return
-    except OSError:
-        print(str,"Error: CMS - error handling block: double error")
+    except Exception as e:
+        print("Error: CMS - EventLog " + str(e) )
 
 # =================================== ModbusMate subroutines & variables =====================================
 # Define the dictionary mapping SUNSPEC DID's to Outback names
@@ -241,13 +239,11 @@ def getBlock(basereg):
     blockname = None
     try:
         blockname = mate3_did[blockID]
-        # print "Detected a " + mate3_did[blockID] + " at " + str(basereg) + " with size " + str(blocksize)
     except:
         print("ERROR: Unknown device type with DID=" + str(blockID))
     return {"size": blocksize, "DID": blockname}
-
+# 
 def OutbackBlock():
-    global OutbackBlock_flag
     loop = 0
     while loop < 3 :
         # autoscheduling 1 -- reading registries
@@ -271,8 +267,7 @@ def OutbackBlock():
             OutBack_Sched_1_AC_Mode_local = ACmode_list.index(Sched_1_AC_Mode_local)
         
         logging.info(".... schedule_1 [h:mm] " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " + str(Sched_1_AC_Mode))
-        
-       
+
         # autoscheduling 1 -- write OutBack_Sched_1_AC_Mode registry
         if  Sched_1_AC_Mode_local != "notset" and Sched_1_AC_Mode_local in ACmode_list and OutBack_Sched_1_AC_Mode != OutBack_Sched_1_AC_Mode_local:
             rw = client.write_register(reg + 409, OutBack_Sched_1_AC_Mode_local)
@@ -378,17 +373,16 @@ def OutbackBlock():
             dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode_hour"]   = "notset"
             dinamic_data["OutbackBlock"]["outback_schedule"]["sched_3_ac_mode_minute"] = "notset"
             dinamic_data["OutbackBlock"]["OutbackBlock_flag"]                          = 0
-            OutbackBlock_flag                    = 0
             break
         else:
             loop = loop + 1
             logging.info(".... verification loop " +  str(loop))
 
-    if OutbackBlock_flag == 0:
-        logging.info(".... verification completed in " + str(loop) +" loop: all good")
-        EventLog("Info : CMS - sch_1 to " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " + str(Sched_1_AC_Mode))
-        EventLog("Info : CMS - sch_2 to " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " + str(Sched_2_AC_Mode))
+    if  dinamic_data["OutbackBlock"]["OutbackBlock_flag"] == 0:
+        logging.info(".... verification completed: all good")
         EventLog("Info : CMS - sch_3 to " + str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " + str(Sched_3_AC_Mode))
+        EventLog("Info : CMS - sch_2 to " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " + str(Sched_2_AC_Mode))
+        EventLog("Info : CMS - sch_1 to " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " + str(Sched_1_AC_Mode))
     else:
         logging.info(".... verification failed")
         EventLog("Info : CMS - update failed")
@@ -401,7 +395,6 @@ def OutbackBlock():
     return
 
 def OutbackSystemControlBlock():
-    global OutbackSystemControlBlock_flag
     loop = 0
     while loop <= 3 :
         response = client.read_holding_registers(reg + 5, 1)
@@ -416,19 +409,28 @@ def OutbackSystemControlBlock():
         else:    
             Charge_Enable_Disable_flag = 0
             dinamic_data["OutbackSystemControlBlock"]["Charge_Enable_Disable"] = "notset"
-       
-        if Charge_Enable_Disable_flag == 0 :
-            dinamic_data["OutbackSystemControlBlock"]["OutbackSystemControlBlock_flag"] = 0           
-            OutbackSystemControlBlock_flag = 0
+
+        if Charge_Enable_Disable_flag == 0:
+            dinamic_data["OutbackSystemControlBlock"]["OutbackSystemControlBlock_flag"] == 0
             break
         else:
             loop = loop + 1
             logging.info(".... verification loop " +  str(loop))
+
+    if dinamic_data["OutbackSystemControlBlock"]["OutbackSystemControlBlock_flag"] == 0:
+        logging.info(".... verification completed: all good")
+    else:
+        logging.info(".... verification failed")
+        EventLog("Info : CMS - update failed")
+        
+    dinamic_data["time_taken"] = str(curent_date_time.strftime("%Y-%m-%d %H:%M:%S"))
     
+    with open(working_dir +'/dinamic_data.json', 'w') as outfile:
+        json.dump(dinamic_data, outfile, indent=1)
+
     return
 
 def RadianInverterConfigurationBlock():
-    global InverterConfigurationBlock_flag
     loop = 0
     while loop <= 3 :
         #GSconfig_Charger_Operating_Mode
@@ -463,21 +465,19 @@ def RadianInverterConfigurationBlock():
             logging.info("......updating AC mode to: " + Grid_Input_Mode_local)
             EventLog("Info : CMS - updating AC mode to: " + Grid_Input_Mode_local)
             Grid_Input_Mode_flag = 1
-            #if MQTT_active=='true' : publish.single('home-assistant/solar/solar_grid_input_mode', Grid_Input_Mode_local, hostname=MQTT_broker)
         else:    
             Grid_Input_Mode_flag = 0
             dinamic_data["RadianInverterConfigurationBlock"]["grid_input_mode"] = "notset"
        
         if Grid_Input_Mode_flag == 0 and Charger_Operating_Mode_flag == 0:
-            dinamic_data["RadianInverterConfigurationBlock"]["InverterConfigurationBlock_flag"] = 0           
-            InverterConfigurationBlock_flag = 0
+            dinamic_data["RadianInverterConfigurationBlock"]["InverterConfigurationBlock_flag"] = 0
             break
         else:
             loop = loop + 1
             logging.info(".... verification loop " +  str(loop))
     
-    if InverterConfigurationBlock_flag == 0:
-        logging.info(".... verification completed in " + str(loop) +" loop: all good")
+    if dinamic_data["RadianInverterConfigurationBlock"]["InverterConfigurationBlock_flag"] == 0:
+        logging.info(".... verification completed: all good")
     else:
         logging.info(".... verification failed")
         EventLog("Info : CMS - update failed")
@@ -493,17 +493,18 @@ def FLEXnetDCRealTimeBlock():
     logging.info(".. Detect a FLEXnet-DC Real Time Block")  
     return
 
-
 # =======================================This is the main loop =====================================
-print("------------------------------------------------")
-print(" MATE3 ModBus Interface")
-print("------------------------------------------------")
+#------------------------------------------------
+# MATE3 ModBus Interface
+#------------------------------------------------
 
 # Try to build the mate3 MODBUS connection
+print(".. waiting few seconds ")
+time.sleep(1)
+start_run  = datetime.now() # used only for runtime calculation
+logging.info("Building MATE3 MODBUS connection")
+
 try:
-    logging.info("Building MATE3 MODBUS connection")
-    logging.info(".. waiting 10 seconds ")
-    time.sleep(10)
     client = ModbusClient(mate3_ip, mate3_modbus)
     logging.info(".. Make sure we are indeed connected to an Outback power system")
     reg    = sunspec_start_reg
@@ -517,6 +518,7 @@ except:
     EventLog("Error: CMS - Fail to connect to MATE")
     logging.info(".. Failed to connect to MATE3. Enable SUNSPEC and check port. Exciting")
     exit()
+
 logging.info(".. Connected OK to an Outback system")
 
 # scanning blocks
@@ -528,16 +530,16 @@ while True:
         blockResult = getBlock(reg)
         
         if "Outback block" in blockResult['DID']:
-            logging.info(".. Detect a Outback Block")
+            logging.info(".. Detected a Outback Block")
             if OutbackBlock_flag == 1: OutbackBlock()
             
         if "Outback System Control Block" in blockResult['DID']:
-            logging.info(".. Detect a Outback System Control Block")
+            logging.info(".. Detected a Outback System Control Block")
             if OutbackSystemControlBlock_flag == 1: OutbackSystemControlBlock()
             
         if "Radian Inverter Configuration Block" in blockResult['DID']: 
-            logging.info(".. Detect a FXR inverter")
-            RadianInverterConfigurationBlock()
+            logging.info(".. Detected a FXR inverter")
+            if InverterConfigurationBlock_flag == 1: RadianInverterConfigurationBlock()
 
         if "FLEXnet-DC Real Time Block" in blockResult['DID']: FLEXnetDCRealTimeBlock()
         
@@ -545,17 +547,17 @@ while True:
             reg = reg + blockResult['size'] + 2
         else:
             break
-    write=0 
-    if write == 0:
-        if loop >0:
-            logging.info(".. verification completed in " + str(loop) +" loop: all good")
-            EventLog("Info : CMS - update completed")
-        client.close()
-        logging.info(".. Mate connection closed ")
-        logging.info("Exiting ")
-        break           # DPO - remark it if continuous loop needed
-    else:
-        logging.info(".. verification loop " +  str(loop))
-        time.sleep(1)
-        loop = loop + 1 # only for reporting purpose
-    
+
+    if loop >0:
+        logging.info(".. verification completed in " + str(loop) +" loop: all good")
+        EventLog("Info : CMS - update completed")
+
+    client.close()
+    logging.info(".. Mate connection closed ")
+    logging.info("Exiting ")
+    print(".. done ")
+    end_run = datetime.now()                                                 #DPO debug
+    running_time = round ((end_run - start_run).total_seconds(),3)           #DPO debug
+    print("response time Mate3:    ",format(running_time,".3f")," sec")      #DPO debug 
+
+    break           # DPO - remark it if continuous loop needed
