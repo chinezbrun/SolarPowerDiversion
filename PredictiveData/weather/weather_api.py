@@ -67,7 +67,7 @@ for n in range(9):
     mydb.commit()   
 
 # summary table update based on time of the day
-if curent_date_time.hour > 0 and curent_date_time.hour < 12:
+if curent_date_time.hour >= 0 and curent_date_time.hour < 12:
     sql="SELECT avg(clouds), date, avg(ID) from forecast where date(date) = date(now()) and hour(date) > 6 and hour(date) < 18"
 else:
     sql="SELECT avg(clouds), date, avg(ID) from forecast where date(date) > date(now()) and hour(date) > 6 and hour(date) < 18"

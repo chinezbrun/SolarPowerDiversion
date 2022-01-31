@@ -8,4 +8,4 @@
 0.4.0 20201030  - major - enhancements: average Weather Conditions inserted in summary
 0.5.0 20210515  - major - enhancements: weather info in dinamic.json now
                                         weather description included in summary 
-                
+0.5.1 20220104  - minor - bugfix: fix the error on 00-01 hour                

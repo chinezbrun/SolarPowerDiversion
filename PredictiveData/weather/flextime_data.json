@@ -3,92 +3,92 @@
  "flextime": {
   "January": [{
    "sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 8,
-   "sched_2_ac_mode": "Backup",
+   "sched_1_ac_mode_hour": 4,
+   "sched_2_ac_mode": "GridZero",
    "sched_2_ac_mode_hour": 13,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
-  },
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 15
+   },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode": "GridZero",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 15
+   },
    {"sched_1_ac_mode": "GridZero",
    "sched_1_ac_mode_hour": 8,
-   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode": "GridZero",
    "sched_2_ac_mode_hour": 13,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 15
    },
-	{"sched_1_ac_mode": "Backup",
-   "sched_1_ac_mode_hour": 10,
-   "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 12,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
-   },
-	{"sched_1_ac_mode": "Backup",
-   "sched_1_ac_mode_hour": 10,
-   "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 12,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   {"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode": "GridZero",
+   "sched_2_ac_mode_hour": 13,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 15
 	}
 ],
   "February": [{
    "sched_1_ac_mode": "MiniGrid",
    "sched_1_ac_mode_hour": 2,
-   "sched_2_ac_mode": "Backup",
-   "sched_2_ac_mode_hour": 15,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
-  },
-   {"sched_1_ac_mode": "GridZero",
-   "sched_1_ac_mode_hour": 8,
-   "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode": "GridZero",
    "sched_2_ac_mode_hour": 14,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
-   },
-	{"sched_1_ac_mode": "Backup",
-   "sched_1_ac_mode_hour": 8,
-   "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 14,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
-   },
-	{"sched_1_ac_mode": "Backup",
-   "sched_1_ac_mode_hour": 8,
-   "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 14,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
-	}
-],
-  "March": [{
-   "sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 0,
-   "sched_2_ac_mode": "Backup",
-   "sched_2_ac_mode_hour": 16,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 16
   },
    {"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 2,
-   "sched_2_ac_mode": "Backup",
-   "sched_2_ac_mode_hour": 15,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_1_ac_mode_hour": 4,
+   "sched_2_ac_mode": "GridZero",
+   "sched_2_ac_mode_hour": 14,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 16
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 8,
+   "sched_2_ac_mode":  "GridZero",
+   "sched_2_ac_mode_hour": 14,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 16
    },
 	{"sched_1_ac_mode": "GridZero",
    "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode":  "Backup",
+   "sched_2_ac_mode_hour": 14,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 16
+	}
+],
+  "March": [{
+   "sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 1,
+   "sched_2_ac_mode": "GridZero",
    "sched_2_ac_mode_hour": 15,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 17
+  },
+   {"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 3,
+   "sched_2_ac_mode": "GridZero",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 17
    },
-	{"sched_1_ac_mode": "Backup",
-   "sched_1_ac_mode_hour": 8,
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 7,
+   "sched_2_ac_mode":  "GridZero",
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 17
+   },
+	{"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 7,
    "sched_2_ac_mode":  "Backup",
    "sched_2_ac_mode_hour": 15,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 17
 	}
  ],
    "April": [{
@@ -160,23 +160,23 @@
    "sched_3_ac_mode_hour": 0
   },
    {"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 6,
+   "sched_1_ac_mode_hour": 2,
    "sched_2_ac_mode": "Backup",
    "sched_2_ac_mode_hour": 18,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
 	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 8,
+   "sched_1_ac_mode_hour": 6,
    "sched_2_ac_mode":  "Backup",
    "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
 	{"sched_1_ac_mode": "GridZero",
-   "sched_1_ac_mode_hour": 8,
+   "sched_1_ac_mode_hour": 6,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 15,
+   "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
 	}
@@ -190,23 +190,23 @@
    "sched_3_ac_mode_hour": 0
   },
    {"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 6,
+   "sched_1_ac_mode_hour": 2,
    "sched_2_ac_mode": "Backup",
-   "sched_2_ac_mode_hour": 17,
+   "sched_2_ac_mode_hour": 18,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
 	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 8,
+   "sched_1_ac_mode_hour": 6,
    "sched_2_ac_mode":  "Backup",
    "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
-	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 8,
+	{"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 6,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 15,
+   "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
 	}
@@ -220,23 +220,23 @@
    "sched_3_ac_mode_hour": 0
   },
    {"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 8,
+   "sched_1_ac_mode_hour": 2,
    "sched_2_ac_mode": "Backup",
+   "sched_2_ac_mode_hour": 18,
+   "sched_3_ac_mode": "Disabled",
+   "sched_3_ac_mode_hour": 0
+   },
+	{"sched_1_ac_mode": "MiniGrid",
+   "sched_1_ac_mode_hour": 6,
+   "sched_2_ac_mode":  "Backup",
    "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
-	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 8,
+	{"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 6,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 15,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
-   },
-	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 10,
-   "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 12,
+   "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
 	}
@@ -250,23 +250,23 @@
    "sched_3_ac_mode_hour": 0
   },
    {"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 8,
+   "sched_1_ac_mode_hour": 3,
    "sched_2_ac_mode": "Backup",
-   "sched_2_ac_mode_hour": 16,
+   "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
 	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 10,
+   "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 13,
+   "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
-	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 10,
+	{"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 12,
+   "sched_2_ac_mode_hour": 17,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
 	}
@@ -280,23 +280,23 @@
    "sched_3_ac_mode_hour": 0
   },
    {"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 6,
+   "sched_1_ac_mode_hour": 4,
    "sched_2_ac_mode": "Backup",
-   "sched_2_ac_mode_hour": 15,
+   "sched_2_ac_mode_hour": 16,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
 	{"sched_1_ac_mode": "MiniGrid",
    "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 14,
+   "sched_2_ac_mode_hour": 16,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
    },
-	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 10,
+	{"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 13,
+   "sched_2_ac_mode_hour": 16,
    "sched_3_ac_mode": "Disabled",
    "sched_3_ac_mode_hour": 0
 	}
@@ -306,59 +306,59 @@
    "sched_1_ac_mode_hour": 2,
    "sched_2_ac_mode": "Backup",
    "sched_2_ac_mode_hour": 15,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 16
   },
    {"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 10,
+   "sched_1_ac_mode_hour": 5,
    "sched_2_ac_mode": "Backup",
-   "sched_2_ac_mode_hour": 14,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 16
    },
-	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 10,
+	{"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 12,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 16
    },
-	{"sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 10,
+	{"sched_1_ac_mode": "GridZero",
+   "sched_1_ac_mode_hour": 9,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 12,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 16
 	}
 ],
   "December": [{
    "sched_1_ac_mode": "MiniGrid",
-   "sched_1_ac_mode_hour": 8,
-   "sched_2_ac_mode": "Backup",
+   "sched_1_ac_mode_hour": 4,
+   "sched_2_ac_mode": "GridZero",
    "sched_2_ac_mode_hour": 13,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 15
   },
    {"sched_1_ac_mode": "GridZero",
    "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode": "Backup",
-   "sched_2_ac_mode_hour": 13,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 15
    },
 	{"sched_1_ac_mode": "Backup",
-   "sched_1_ac_mode_hour": 10,
+   "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 12,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 15
    },
 	{"sched_1_ac_mode": "Backup",
-   "sched_1_ac_mode_hour": 10,
+   "sched_1_ac_mode_hour": 8,
    "sched_2_ac_mode":  "Backup",
-   "sched_2_ac_mode_hour": 12,
-   "sched_3_ac_mode": "Disabled",
-   "sched_3_ac_mode_hour": 0
+   "sched_2_ac_mode_hour": 15,
+   "sched_3_ac_mode": "Backup",
+   "sched_3_ac_mode_hour": 15
 	}
 ]
  }
