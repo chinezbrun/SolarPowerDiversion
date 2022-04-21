@@ -18,11 +18,10 @@ from datetime import datetime, timedelta
 from array import *
 import statistics
 from configparser import ConfigParser
-import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 import sys, os
 
-script_ver = "1.3.1_20220130"
+script_ver = "1.4.0_20220326"
 print("---Solar Diversion Power build:", script_ver)
 
 #********************************** subroutines **********************************
@@ -38,7 +37,7 @@ def PushNotification (push):
         print("PushNotification: failed")
 
 #error log subroutine
-def ErrorPrint (str) :
+def EventLog (str) :
     try:
         with open(InOutDataPath +'raspberry_info.log','r') as file:
             save = file.read()
@@ -50,20 +49,33 @@ def ErrorPrint (str) :
         with open(InOutDataPath +'raspberry_info.log','a') as file:
             file.write(save)
         file.close()
-        
         return
     except OSError:
-       print("Errorhandling: double error in ErrorPrint")
+       print("Errorhandling: double error in EventLog")
         
-# close all relays - not used yet
-def CloseAll(): 
+# close all stuff
+def CloseDiversion():
     GPIO.output(17, GPIO.HIGH)
-    load_01 = "inactive"
     GPIO.output(18, GPIO.HIGH)
-    load_02 = "inactive"
+    GPIO.output(24, GPIO.HIGH)
+   
+    publish.single(MQTT_topic2, gpio_states[GPIO.input(17)], hostname=MQTT_broker) #divert AC load1
+    publish.single(MQTT_topic3, gpio_states[GPIO.input(18)], hostname=MQTT_broker) #divert AC load2
+    publish.single(MQTT_topic4, gpio_states[GPIO.input(22)], hostname=MQTT_broker) #divert DC
+    publish.single(MQTT_topic5, gpio_states[GPIO.input(23)], hostname=MQTT_broker) #stop U/P low SOC
+    publish.single(MQTT_topic6, gpio_states[GPIO.input(24)], hostname=MQTT_broker) #divert AC load3
+    
+    GPIO.cleanup()
     return
 
-def mqtt_client():
+def mqtt_push():
+    if MQTT_active=="true":
+        publish.single(MQTT_topic1, uptime, hostname=MQTT_broker)                      # uptime every minute
+        publish.single(MQTT_topic2, gpio_states[GPIO.input(17)], hostname=MQTT_broker) #divert AC load1
+        publish.single(MQTT_topic3, gpio_states[GPIO.input(18)], hostname=MQTT_broker) #divert AC load2
+        publish.single(MQTT_topic4, gpio_states[GPIO.input(22)], hostname=MQTT_broker) #divert DC
+        publish.single(MQTT_topic5, gpio_states[GPIO.input(23)], hostname=MQTT_broker) #stop U/P low SOC
+        publish.single(MQTT_topic6, gpio_states[GPIO.input(24)], hostname=MQTT_broker) #divert AC load3
     return
 
 #********************************** initialization **********************************
@@ -79,7 +91,9 @@ loop_ref              = int(config.get('solarpower', 'loop_ref'))               
 voltage_ref           = float(config.get('solarpower', 'voltage_ref'))           # default = 52    --used in decision for load 01 (compensated)
 voltage_compensated   = config.get('solarpower','voltage_compensated')           # default = true --if true voltage_ref will be temperature compensated with 0 0.12v/grade
 max_ac_out_pwr        = int(config.get('solarpower', 'max_ac_out_pwr'))          # default = 2500  --max power/ inverter used to protect inverters for extra loads
-divert_pwr_ref        = int(config.get('solarpower', 'divert_pwr_ref'))          # default = 1000  --divertion power to activate load 01
+divert_pwr_ref_01     = int(config.get('solarpower', 'divert_pwr_ref_01'))       # default = 1000  --divertion power to activate load 01
+divert_pwr_ref_02     = int(config.get('solarpower', 'divert_pwr_ref_02'))       # default = 1000  --divertion power to activate load 02
+divert_pwr_ref_03     = int(config.get('solarpower', 'divert_pwr_ref_03'))       # default = 1000  --divertion power to activate load 03
 divert_by_state       = config.get('solarpower', 'divert_by_state')              # default = false --if true charger state is used if false baterry_voltage ref is used to activete diversion relay
 chargers_PV_ref       = int(config.get('solarpower', 'chargers_PV_ref'))         # default = 90    --used to activate load 01 when no divertion power info available (i.e forced)
 soc_min_limit         = int(config.get('solarpower','soc_min_limit'))            # default = 70    --SOC min used for stop level 1 utilities - restauration level SOC_min +5
@@ -89,8 +103,6 @@ grid_droped           = config.get('solarpower', 'grid_droped')                 
 floating              = config.get('solarpower', 'floating')                     # label           --used during various decision --should be identic with value provided by your device json file 
 absorbtion            = config.get('solarpower', 'absorbtion')                   # label           --used during various decision --should be identic with value provided by your device json file 
 equalize              = config.get('solarpower', 'equalize')                     # label           --used during various decision --should be identic with value provided by your device json file 
-#inverters             = int(config.get('solarpower', 'inverters'))               # default = 2     --number of inverters in the system used in JSON decoding
-#chargers              = int(config.get('solarpower', 'chargers'))                # default = 2     --number of chargers in the system used in JSON decoding
 push_notification     = config.get('solarpower', 'push_notificaton')             # default = false -- if true push notification is send to android/iphone - pushbullet app should be installed and configured
 push_api_token        = config.get('solarpower', 'push_api_token')               # api_token key is generated by Pushover app
 push_user_key         = config.get('solarpower', 'push_user_key')                # user_key is generated by Pushover app
@@ -133,17 +145,19 @@ GPIO.setup(17, GPIO.OUT, initial=GPIO.HIGH)                                    #
 GPIO.setup(18, GPIO.OUT, initial=GPIO.HIGH)                                    # load 2 relay    -- used to start additional AC load (level 2) via wireless plug
 GPIO.setup(22, GPIO.OUT, initial=GPIO.HIGH)                                    # diverter switch -- used to command DC breaker for additional protection 
 GPIO.setup(23, GPIO.OUT, initial=GPIO.HIGH)                                    # stopU/P relay   -- used to switch main utilities from Solar to Grid for battery protection
-GPIO.setup(24, GPIO.OUT, initial=GPIO.HIGH)                                    # booked but not used in curent version 
+GPIO.setup(24, GPIO.OUT, initial=GPIO.HIGH)                                    # load 3 relay    -- used to start additional AC load (level 3) via wireless plug 
 GPIO.setup(25, GPIO.OUT, initial=GPIO.HIGH)                                    # booked but not used in curent version
 
 #variables init
 up_time               = time.time() # count the running time - never reset
 uptime_push_time      = time.time() # count the mqtt pushing frecvency for uptime - reset during execution
+uptime                = 0           # running time
 start_time            = time.time() # count reading frecvency for status.json - reset during execution
 loop_time             = time.time()
 use_time              = time.time()
 load_01               ="inactive"
 load_02               ="inactive"
+load_03               ="inactive"
 stop_UP               ="inactive"
 divert                ="inactive"
 gpio_states           = ("on", "off") # readable GPIO states;used in MQTT payload
@@ -168,13 +182,18 @@ divert_pwr_array      = []
 charger_60_PV_array   = []
 charger_80_PV_array   = []
 
+# MQTT push -- mirror GPIO initialization
+mqtt_push()
+
 #summary of startup parameters
 print("---startup parameters")
 print("loop_ref:            ", loop_ref)
 print("max_ac_out_pwr:      ", max_ac_out_pwr)
 print("voltage_ref:         ", voltage_ref)
 print("voltage_compensated: ",voltage_compensated)
-print("divert_pwr_ref:      ", divert_pwr_ref)
+print("divert_pwr_ref_01:   ", divert_pwr_ref_01)
+print("divert_pwr_ref_02:   ", divert_pwr_ref_02)
+print("divert_pwr_ref_03:   ", divert_pwr_ref_03)
 print("chargers_PV_ref:     ", chargers_PV_ref)
 print("divert_by_state:     ", divert_by_state)
 print("soc_min_limit:       ", soc_min_limit)
@@ -184,7 +203,7 @@ print("boiler_temp_active:  ", boiler_temp_active)
 print("boiler_temp_ref:     ", boiler_temp_ref)
 print("deltatime_ref:       ", deltatime_ref)
 print("InOutDataPath:       ", InOutDataPath)
-print("MQTT active:         ", MQTT_active)
+#print("MQTT active:         ", MQTT_active)
 
 # last check if JSON location is available and exist
 if (os.path.isdir(InOutDataPath)) == True:
@@ -192,7 +211,7 @@ if (os.path.isdir(InOutDataPath)) == True:
 else:
     print("---initialization failed, InOutDataPath not found")
     
-ErrorPrint("START: program ver:" + script_ver)
+EventLog("START: program ver:" + script_ver)
 PushNotification("START: program ver:" + script_ver)
 
 #********************************** start main loop **********************************
@@ -207,8 +226,7 @@ while True:
             # JSON opening and decoding
             data                  = json.load(open(InOutDataPath + 'status.json'))
             stamp                 = data["time"]["server_local_time"]
-
-            # data sanity check
+           # data sanity check
             json_inverters = 0
             json_chargers  = 0
             for n in range (len(data["devices"])):
@@ -219,8 +237,6 @@ while True:
                     json_inverters += 1
                 if device_id == 3:
                     json_chargers += 1                    
-                #if port[n+1] != port[address]:
-                    #print ("json device mapping found on port",  n+1, port[n+1], "vs", port [address], "mismatch")
             if json_inverters != inverters:
                 print ("expected", inverters, "inverters, found", json_inverters, "trying to autocorrect")
                 inverters = json_inverters
@@ -299,7 +315,7 @@ while True:
                             temp_time = last_line[0:19]                                # caracter 0-19 to get the string of the date and time
     
                         else:
-                            ErrorPrint("Alert: No data in temperature file")
+                            EventLog("Alert: No data in temperature file")
                             temp_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")   # dummy data
                             boiler_temp = 70                                           # dummy data
                         FMT       ="%d-%m-%Y %H:%M:%S"                                 # format of the datetime
@@ -309,72 +325,71 @@ while True:
                 
                 # in case of AC lost send push notification 
                 if ac_input_voltage <100 and ac_input_voltage_ref != 0:
-                    ErrorPrint("Info : Grid lost -- SOC: " + str(soc))
+                    EventLog("Info : Grid lost -- SOC: " + str(soc))
                     PushNotification("Info : Grid lost -- SOC: " + str(soc))
                     ac_input_voltage_ref=0
                 if ac_input_voltage >180 and ac_input_voltage_ref != 220:
-                    ErrorPrint("Info : Grid restored -- SOC: " + str(soc))
+                    EventLog("Info : Grid restored -- SOC: " + str(soc))
                     PushNotification("Info : Grid restored -- SOC: " + str(soc))
                     ac_input_voltage_ref=220
 
                 #GPIO block
                 # protection: inverter overpower
-                if ac_out_pwr>max_ac_out_pwr and load_01=="active" and load_02=="active":
+                if ac_out_pwr>max_ac_out_pwr and load_03=="active":
+                    GPIO.output(24, GPIO.HIGH)
+                    load_03 = "inactive"
+                    EventLog("Alert: Power peak: "+ str(ac_out_pwr)+" -> load_03 STOP")
+                elif ac_out_pwr>max_ac_out_pwr and load_02=="active":
                     GPIO.output(18, GPIO.HIGH)
                     load_02 = "inactive"
-                    ErrorPrint("Alert: Power peak: "+ str(ac_out_pwr)+" -> load_02 STOP")
-                elif ac_out_pwr>max_ac_out_pwr and load_01=="active" and load_02=="inactive":
+                    EventLog("Alert: Power peak: "+ str(ac_out_pwr)+" -> load_02 STOP")
+                elif ac_out_pwr>max_ac_out_pwr and load_01=="active":
                     GPIO.output(17, GPIO.HIGH)
                     load_01 = "inactive"
-                    GPIO.output(18, GPIO.HIGH)
-                    load_02 = "inactive"
-                    ErrorPrint("Alert: Power peak: "+ str(ac_out_pwr)+" -> load_01 & 02 STOP")
+                    EventLog("Alert: Power peak: "+ str(ac_out_pwr)+" -> load_01 STOP")
                     
                 #GPIO block
                 #protection: if SOC is low then stop first floor and utilities 
                 if soc<soc_min_limit and stop_UP=="inactive":   
-                    GPIO.output(23, GPIO.LOW)
                     stop_UP = "active"
-                    ErrorPrint("Alert: Low SOC:" + str(soc) + " -> Solar U/P stopped")
+                    EventLog("Alert: Low SOC:" + str(soc) + " -> Solar U/P stopped")
                     PushNotification("Alert: Low SOC:" + str(soc) + " -> Solar U/P stopped")
                 elif soc>(soc_min_limit + 5) and stop_UP=="active":  
-                    GPIO.output(23, GPIO.HIGH)
                     stop_UP = "inactive"
-                    ErrorPrint("Alert: SOC OK:" +str(soc) + " -> Solar U/P restored")
+                    EventLog("Alert: SOC OK:" +str(soc) + " -> Solar U/P restored")
                     PushNotification("Alert: SOC OK:" +str(soc) + " -> Solar U/P restored")
                 elif soc>(soc_min_limit + 5):  
-                    GPIO.output(23, GPIO.HIGH)
                     stop_UP = "inactive"
-                    
+ 
+                if stop_UP == "active":
+                    GPIO.output(23, GPIO.LOW)
+                else:
+                    GPIO.output(23, GPIO.HIGH)
+  
                 #GPIO block    
                 #activate power divert relay
                 if divert_by_state == "true" and deltatime<deltatime_ref and boiler_temp<boiler_temp_ref and\
-                     charger_60_PV > 70 or charger_80_PV > 70 and\
                     (charger_60_mode==floating or charger_80_mode==floating or\
                     charger_60_mode==absorbtion or charger_80_mode==absorbtion or\
                     charger_60_mode==equalize or charger_80_mode==equalize):
-                    GPIO.output(22, GPIO.LOW)
                     divert = "active"
                 elif divert_by_state == "false" and deltatime<deltatime_ref and boiler_temp<boiler_temp_ref and battery_voltage > (voltage_ref_compens):
-                    GPIO.output(22, GPIO.LOW)
                     divert = "active"
-                elif divert == "active" and divert_by_state == "false"and deltatime<deltatime_ref and boiler_temp<boiler_temp_ref and battery_voltage > (voltage_ref_compens - 0.5):
-                    GPIO.output(22, GPIO.LOW)
-                    divert = "active"                   
                 elif divert == "active" and divert_by_state == "false" and battery_voltage < (voltage_ref_compens - 0.5):
-                    GPIO.output(22, GPIO.HIGH)
                     divert = "inactive"
                 elif deltatime<deltatime_ref and boiler_temp>boiler_temp_ref: 
-                    GPIO.output(22, GPIO.HIGH)
-                    divert="inactive_forced"
-                elif deltatime>deltatime_ref:                                                              #protection : boiler temp - same file from long time >   900 
-                    GPIO.output(22, GPIO.HIGH)
+                    divert="inactive_hightemp"
+                elif deltatime>deltatime_ref:                                                     #protection : boiler temp - same file from long time >   900 
                     divert = "inactive_nodata"
-                    ErrorPrint("Alert: No boiler temp data for:"+ str(int(deltatime/60))+ " min!")                  
+                    EventLog("Alert: No boiler temp data for:"+ str(int(deltatime/60))+ " min!")                  
+                else:
+                    divert = "inactive"
+                
+                if divert == "active":
+                    GPIO.output(22, GPIO.LOW)
                 else:
                     GPIO.output(22, GPIO.HIGH)
-                    divert = "inactive"
-                    
+
                 #reporting: measure time on grid, on battery, no grid
                 now = datetime.now()
                 if ac_mode==grid_connect:
@@ -410,39 +425,38 @@ while True:
                 
                 if start_reset_time < now < end_reset_time:
                      print("---------------------------------.time reset")
-                     ErrorPrint("Info : reset solar /grid usage time")
+                     EventLog("Info : reset solar /grid usage time")
                      ac_drop_time      = 0
                      no_ac_drop_time   = 0
                      ac_use_time       = 0 
                      no_ac_use_time    = 0
                      no_ac_lasttime    = 0
 
+                mqtt_push()               
+
             # calculate uptime of the script - for health and reporting purpose
-            # MQTT GPIO block push status - reporting purpose 
-            if (time.time() - uptime_push_time) >60:                                 # try every 60 sec 
+            if (time.time() - uptime_push_time) >60:                                  # try every 60 sec 
                 uptime_push_time = time.time()
                 uptime = round((time.time()- up_time)/86400,3)
-                if MQTT_active=='true':
-                    publish.single(MQTT_topic1, uptime, hostname=MQTT_broker)                      #uptime every minute
-                    publish.single(MQTT_topic2, gpio_states[GPIO.input(17)], hostname=MQTT_broker) #divert AC load1
-                    publish.single(MQTT_topic3, gpio_states[GPIO.input(18)], hostname=MQTT_broker) #divert AC load2
-                    publish.single(MQTT_topic4, gpio_states[GPIO.input(22)], hostname=MQTT_broker) #divert DC
-                    publish.single(MQTT_topic5, gpio_states[GPIO.input(23)], hostname=MQTT_broker) #stop U/P low SOC
-
+                mqtt_push()
+            
             #GPIO block    
             # protection: the same file for long time 
             if (time.time() - loop_time)>300:
                 GPIO.output(17, GPIO.HIGH)
-                load_01 = "inactive"
                 GPIO.output(18, GPIO.HIGH)
+                GPIO.output(24, GPIO.HIGH)
+                mqtt_push()
+                load_01 = "inactive"
                 load_02 = "inactive"
-                ErrorPrint("Alert: Same JSON file for:" + str(int((time.time() - loop_time)/60)) +" min!")            
-           
+                load_03 = "inactive"
+                EventLog("Alert: Same JSON file for:" + str(int((time.time() - loop_time)/60)) +" min!")            
+
             if loop_no >= loop_ref:
                 shunt_c_avg         = round(statistics.mean(shunt_c_array),2)
                 battery_voltage_avg = round(statistics.mean(battery_voltage_array),2)
                 divert_pwr_avg      = int(statistics.mean(divert_pwr_array))
-                divert_pwr_std      = int(statistics.stdev(divert_pwr_array))/2    # standard dev / 2
+                divert_pwr_std      = int(statistics.stdev(divert_pwr_array))/2        # standard dev / 2
                 divert_pwr_cor      = divert_pwr_avg - divert_pwr_std
                 ac_out_pwr_avg      = int(statistics.mean(ac_out_pwr_array))
                 charger_60_PV_avg   = int(statistics.mean(charger_60_PV_array))
@@ -450,59 +464,83 @@ while True:
                 chargers_PV_avg     = (charger_80_PV_avg + charger_60_PV_avg) / 2
 
                 # GPIO block
-                #load_02 control   
-                if load_01 =="active" and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert_pwr_cor > divert_pwr_ref :
-                    GPIO.output(18, GPIO.LOW)
-                    load_02 = "active"
-                elif load_01 =="active" and divert=="inactive_forced" and chargers_PV_avg > chargers_PV_ref and \
+                #load_03 control   
+                if load_02 =="active" and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert_pwr_cor > divert_pwr_ref_03 :
+                    load_03 = "active"
+                elif load_02 =="active" and divert=="inactive_hightemp" and chargers_PV_avg > chargers_PV_ref and \
                      (charger_60_mode==floating or charger_80_mode==floating or charger_60_mode==absorbtion or charger_80_mode==absorbtion or\
-                      charger_60_mode==equalize or charger_80_mode==equalize):
-                    GPIO.output(18, GPIO.LOW)
+                     charger_60_mode==equalize or charger_80_mode==equalize):
+                    load_03 = "active"
+                elif load_02 =="active" and load_03 =="active" and divert_pwr_cor >100: 
+                    load_03 = "active"
+                elif  load_02=="active" and load_03 =="active" and divert=="inactive_hightemp" and battery_voltage_avg > voltage_ref_compens:
+                    load_03 = "active"
+                elif load_02 =="active" and load_03 =="active" and divert=="active" and divert_pwr_cor <100:
+                    load_03 = "inactive_skip"
+                elif  load_02=="active" and load_03 =="active" and divert=="inactive_hightemp" and battery_voltage_avg < voltage_ref_compens:
+                    load_03 = "inactive_skip" 
+                else:
+                    load_03 = "inactive"
+                
+                if  load_03 == "active":
+                    GPIO.output(24, GPIO.LOW)
+                else:
+                    GPIO.output(24, GPIO.HIGH)
+
+                # GPIO block
+                #load_02 control   
+                if load_01 =="active" and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert_pwr_cor > divert_pwr_ref_02 :
                     load_02 = "active"
-                elif load_01 =="active" and load_02 =="active" and divert_pwr_cor >100:
-                    GPIO.output(18, GPIO.LOW)
+                elif load_01 =="active" and divert=="inactive_hightemp" and chargers_PV_avg > chargers_PV_ref and \
+                     (charger_60_mode==floating or charger_80_mode==floating or charger_60_mode==absorbtion or charger_80_mode==absorbtion or\
+                     charger_60_mode==equalize or charger_80_mode==equalize):
                     load_02 = "active"
-                elif  load_01=="active" and load_02 =="active" and divert=="inactive_forced" and battery_voltage_avg > voltage_ref_compens:
-                    GPIO.output(18, GPIO.LOW)
+                elif load_01 =="active" and load_02 =="active" and divert_pwr_cor >100: 
+                    load_02 = "active"
+                elif  load_01=="active" and load_02 =="active" and divert=="inactive_hightemp" and battery_voltage_avg > voltage_ref_compens:
                     load_02 = "active"
                 elif load_01 =="active" and load_02 =="active" and divert=="active" and divert_pwr_cor <100:
-                    GPIO.output(18, GPIO.HIGH)
                     load_02 = "inactive_skip"
-                elif  load_01=="active" and load_02 =="active" and divert=="inactive_forced" and battery_voltage_avg < voltage_ref_compens:
-                    GPIO.output(18, GPIO.HIGH)
+                elif  load_01=="active" and load_02 =="active" and divert=="inactive_hightemp" and battery_voltage_avg < voltage_ref_compens:
                     load_02 = "inactive_skip" 
                 else:
-                    GPIO.output(18, GPIO.HIGH)
                     load_02 = "inactive"
-                    
+                
+                if  load_02 == "active":
+                    GPIO.output(18, GPIO.LOW)
+                else:
+                    GPIO.output(18, GPIO.HIGH)
+
                 #GPIO block
                 # load_01 control
-                if ac_mode == grid_droped  and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert_pwr_cor > divert_pwr_ref: 
-                    GPIO.output(17, GPIO.LOW)
+                if ac_mode == grid_droped  and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert_pwr_cor > divert_pwr_ref_01: 
                     load_01 = "active"
-                elif ac_mode == grid_droped  and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert=="inactive_forced" and chargers_PV_avg > chargers_PV_ref and \
+                elif ac_mode == grid_droped  and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert=="inactive_hightemp" and chargers_PV_avg > chargers_PV_ref and \
                      (charger_60_mode==floating or charger_80_mode==floating or charger_60_mode==absorbtion or charger_80_mode==absorbtion or\
                       charger_60_mode==equalize or charger_80_mode==equalize):  
-                    GPIO.output(17, GPIO.LOW)
                     load_01 = "active"
                 elif ac_mode == grid_droped  and load_01=="active" and load_02=="active" and battery_voltage_avg > voltage_ref_compens:                    
-                    GPIO.output(17, GPIO.LOW)
                     load_01 = "active"
                 elif ac_mode == grid_droped  and load_01=="active" and load_02=="inactive" and divert_pwr_cor >100:                    
-                    GPIO.output(17, GPIO.LOW)
                     load_01 = "active"                    
                 elif ac_mode == grid_droped  and load_01=="active" and load_02=="inactive_skip":                    
-                    GPIO.output(17, GPIO.LOW)
                     load_01 = "active"
-                elif ac_mode == grid_droped  and load_01=="active" and divert=="inactive_forced" and battery_voltage_avg > voltage_ref_compens:                    
-                    GPIO.output(17, GPIO.LOW)
+                elif ac_mode == grid_droped  and load_01=="active" and divert=="inactive_hightemp" and battery_voltage_avg > voltage_ref_compens:                    
                     load_01 = "active"
                 else:    
-                    GPIO.output(17, GPIO.HIGH)
                     load_01 = "inactive"
-                    GPIO.output(18, GPIO.HIGH)
                     load_02 = "inactive"
-                    
+                    load_03 = "inactive"
+
+                if  load_01 == "active":
+                    GPIO.output(17, GPIO.LOW)  
+                else:
+                    GPIO.output(17, GPIO.HIGH) 
+                    GPIO.output(18, GPIO.HIGH)
+                    GPIO.output(24, GPIO.HIGH)
+
+                mqtt_push()
+                
                 # printing block
                 print("stamp:", stamp,)
                 print("up_time:", uptime," reads:", read_file," loops:", loop_no)
@@ -520,9 +558,8 @@ while True:
                 print("OperationalMode:        ", operational_mode)
                 print("grid:                   ", ac_mode)
                 print("ac_input_voltage:       ", ac_input_voltage)
-                print("Diverter relay:         ", divert)
-                print("Load_01 relay:          ", load_01)
-                print("Load_02 relay:          ", load_02)
+                print("DC divert relay:        ", divert)
+                print("AC divert relays:       ", "R1:",load_01, "R2:",load_02, "R3:",load_03)
                 print("Stop utilities relay:   ", stop_UP)
                 
                 # write logfile block
@@ -546,9 +583,8 @@ while True:
                     file.write("OperationalMode:       " + str(operational_mode)+ "\r\n")                              
                     file.write("grid:                  " + str(ac_mode) +"\r\n")
                     file.write("ac_input_voltage[V}:   " + str(ac_input_voltage)+ "\r\n")
-                    file.write("Diverter relay:        " + str(divert)  + "\r\n")
-                    file.write("Load_01 relay:         " + str(load_01) + "\r\n")
-                    file.write("Load_02 relay:         " + str(load_02) + "\r\n")
+                    file.write("DC divert relay:       " + str(divert)  + "\r\n")
+                    file.write("AC divert relays:      " "R1:" + str(load_01)   + " R2:" + str(load_02) + " R3:" + str(load_03)+ "\r\n")
                     file.write("Stop utilities relay:  " + str(stop_UP) + "\r\n")
                     
                 with open(InOutDataPath + 'raspberry_data.log',"a") as file:
@@ -568,31 +604,33 @@ while True:
            
     #error treatment block
     except FileNotFoundError as e:
-        ErrorPrint("Error: FileNotFound - "+ str(e))
+        EventLog("Error: FileNotFound - "+ str(e))
     except ValueError as e:  # includes simplejson.decoder.JSONDecodeError
         shutil.copy(InOutDataPath + 'status.json', InOutDataPath + 'status_error.json') 
-        ErrorPrint("Error: ValueError - " + str(e))
+        EventLog("Error: ValueError - " + str(e))
     except TypeError as e:
-        ErrorPrint("Error: TypeError - " + str(e))
+        EventLog("Error: TypeError - " + str(e))
     except KeyboardInterrupt:
-        ErrorPrint("STOP : Exiting...keyboardInterupt")
+        EventLog("STOP : Exiting...keyboardInterupt")
         PushNotification("STOP : Exiting...keyboardInterupt")
-        GPIO.cleanup()
+        CloseDiversion()
         raise SystemExit
     except OSError:
         time.sleep(120) # time to restore connection
-        ErrorPrint("Error: OSError - host is down!")
+        EventLog("Error: OSError - host is down!")
         print("Info : OSError - delay applyed")
     except Exception as e:
         if error_count < 3:
-            ErrorPrint("Error: Unexpected...- "+ str(e))
+            EventLog("Error: Unexpected...- "+ str(e))
             error_count = error_count + 1
         elif error_count < 4:
-            #ErrorPrint("Error: Unexpected...- "+ str(e))
-            ErrorPrint("Info: Preparing exit and restart")
+            #EventLog("Error: Unexpected...- "+ str(e))
+            EventLog("Info: Preparing exit and restart")
             error_count = error_count + 1        
         else:            
-            ErrorPrint("STOP: Exiting...- "+ str(e))
+            EventLog("STOP: Exiting...- "+ str(e))
             PushNotification("STOP: Exiting...- "+ str(e))
-            GPIO.cleanup()
+            CloseDiversion()
             raise SystemExit
+
+
