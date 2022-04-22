@@ -5,7 +5,7 @@ import mysql.connector as mariadb
 from configparser import ConfigParser
 import sys, os
 
-script_ver = "0.5.0_20210515"
+script_ver = "0.5.2_20220422"
 print("script ver  :" + script_ver)
 
 curent_date_time  = datetime.now()
@@ -113,7 +113,7 @@ if date:                            #DPO: run update summary only if results are
 if smart_weather == "true":
     print("   Weather module active. Checking forcast")
     curent_month = curent_date_time.strftime("%B")
-    if curent_date_time.hour > 18:
+    if curent_date_time.hour >= 18:
         sql="SELECT daily_clouds,date, ID, description from summary where date = date(now() + INTERVAL 1 DAY)"
     else:
         sql="SELECT daily_clouds,date, ID, description from summary where date = date(now())"
