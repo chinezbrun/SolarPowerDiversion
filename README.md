@@ -9,14 +9,16 @@ Modbus communication with MATE3/MATE3s was done base on initial idea of Bas: htt
 The software is divided in two parts:
 
 - PowerDiversion: Python based - the core part, that process input data from MATE3 and push the output on Rapberry PI GPIO
-- PredictiveData: Python based - an add-on to further improve power gathering by sending command to MATE3, change some parameters based on seasonality, weather prediction
+- PredictiveData: Python based - an add-on for further improve power gathering by sending command to MATE3, change some parameters based on seasonality, weather prediction
 
 ### PowerDiversion/PowerDiversion.py
-Runs on Raspberry PI and gets MATE3 critical data trough a JSON file.
+Runs in a closed loop on Raspberry PI and gets MATE3 critical data trough a JSON file.
+As a input the status.json file, produced by MonitorMate_ModBus\DataStreamRelay is used.
+PowerDiversion and MonitorMate_ModBus were designed to be used together. ref: https://github.com/chinezbrun/MonitorMate_ModBus
+
 Based on input data analysis, GPIO output are used to activate various AC loads via 5V relays.
-PowerDiversion.py script is running once every X minute -- task should be created on Raspberry.
-The JSON file used as input, is produced by MonitorMate_ModBus: https://github.com/chinezbrun/MonitorMate_ModBus. 
-PowerDiversion and MonitorMate_ModBus were designed to be used together.
+Similar commands are sent through MQTT topics, if the options are active.
+Pushover notification are send for important events.
 
 PowerDiversion.cfg -- (mandatory) is the configuration file for this script and can be configured based on the needs.
 PowerDiversion.sh  -- (information only) is an example of start-up script to run the code at reboot
@@ -49,6 +51,9 @@ This is the first add-on for PredictiveData and is meant to run API weather http
 6. Set a task in host computer to run weather_api.py every 3h
 7. Edit the PredictiveData/ChangeMateStatusModBus.cfg to your liking.
 8. Set a task in host computer to run PredictiveData/ChangeMateStatusModBus.py every day (preferably @ 21:30)
+
+
+
 
 
 
