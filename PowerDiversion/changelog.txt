@@ -48,7 +48,11 @@ versions history
 1.4.0_20220326 - fixed: divert relay always in divert by state mode
                         delay for MQTT commands (GPIO's, load1, load2, divertDC)
                  enhancement: now with 3 levels of divertion: load1, load2, load3 (GPIO 24), different reference power per load is posible now
-                 code refractoring better integration of MQTT 
+                              code refactoring better integration of MQTT 
+1.5.0_20220903 - enhancement: AC divertion is possible now in Grid_Tied mode
+                              diversion by state mode no longer available - always true
+                              introduced log and push notification for data integrity check alert
+                              code refactoring for diversion levels 1-3
 ---------------------------
 know improvements: 
 #1 load 1, 2 in config file , diverted reference power to be in line with loads -- implemented in 1.4.0 
