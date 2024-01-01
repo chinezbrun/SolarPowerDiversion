@@ -31,3 +31,4 @@ version history
 0.7.0 20200902     - major  - new functionality - update json, extended the list of arguments - force bulk and EQ 
 0.7.1 20201224     - minor  - enhancements - list of valid argumentes changed for better integration with HA 
 0.7.2 20210123     - minor  - enhancements - cleaning, response time, speed up - config updated with "general" section
+0.7.3_20240101     - minor  - arguments correction GriedTied replaced with GridTied

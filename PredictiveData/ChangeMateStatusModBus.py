@@ -8,7 +8,7 @@ from pymodbus.payload import BinaryPayloadDecoder
 from configparser import ConfigParser
 import sys, os
 
-script_ver = "0.7.2_20210123"
+script_ver = "0.7.3_20240101"
 print ("script version   : "+ script_ver)
 
 curent_date_time  = datetime.now()
@@ -54,7 +54,7 @@ curent_date_time                     = datetime.now()
 ACmode_list = [
     "Generator",     # 0
     "Support",       # 1
-    "GriedTied",     # 2
+    "GridTied",      # 2
     "UPS",           # 3
     "Backup",        # 4
     "MiniGrid",      # 5
@@ -380,9 +380,14 @@ def OutbackBlock():
 
     if  dinamic_data["OutbackBlock"]["OutbackBlock_flag"] == 0:
         logging.info(".... verification completed: all good")
-        EventLog("Info : CMS - sch_3 to " + str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " + str(Sched_3_AC_Mode))
-        EventLog("Info : CMS - sch_2 to " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " + str(Sched_2_AC_Mode))
-        EventLog("Info : CMS - sch_1 to " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " + str(Sched_1_AC_Mode))
+        #EventLog("Info : CMS - sch_3 to " + str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " + str(Sched_3_AC_Mode))
+        #EventLog("Info : CMS - sch_2 to " + str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " + str(Sched_2_AC_Mode))
+        #EventLog("Info : CMS - sch_1 to " + str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " + str(Sched_1_AC_Mode))
+        EventLog("Info : CMS - sch: " +\
+                 str(OutBack_Sched_1_AC_Mode_Hour) + ":" + str(OutBack_Sched_1_AC_Mode_Minute) + " " + str(Sched_1_AC_Mode) + " "+\
+                 str(OutBack_Sched_2_AC_Mode_Hour) + ":" + str(OutBack_Sched_2_AC_Mode_Minute) + " " + str(Sched_2_AC_Mode) + " "+\
+                 str(OutBack_Sched_3_AC_Mode_Hour) + ":" + str(OutBack_Sched_3_AC_Mode_Minute) + " " + str(Sched_3_AC_Mode))
+        
     else:
         logging.info(".... verification failed")
         EventLog("Info : CMS - update failed")
