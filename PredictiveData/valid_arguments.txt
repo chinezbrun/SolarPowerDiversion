@@ -9,7 +9,7 @@ ChangeMateStatusModBus.py argument
  use         # use AC
  Generator   # switch AC mode to 
  Support     # switch AC mode to       
- GriedTied   # switch AC mode to      
+ GridTied    # switch AC mode to      
  UPS         # switch AC mode to       
  Backup      # switch AC mode to             
  MiniGrid    # switch AC mode to            
