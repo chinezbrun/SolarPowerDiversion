@@ -21,7 +21,7 @@ from configparser import ConfigParser
 import paho.mqtt.publish as publish
 import sys, os
 
-script_ver = "1.5.0_20220903"
+script_ver = "1.5.1_20240102"
 print("---Solar Diversion Power build:", script_ver)
 
 #********************************** subroutines **********************************
@@ -118,6 +118,7 @@ MQTT_topic5           = config.get('MQTT', 'MQTT_topic5')                       
 MQTT_topic6           = config.get('MQTT', 'MQTT_topic6')                        # MQTT topics      -- used in all MQTT push
 MQTT_topic7           = config.get('MQTT', 'MQTT_topic7')                        # MQTT topics      -- used in all MQTT push
 MQTT_topic8           = config.get('MQTT', 'MQTT_topic8')                        # MQTT topics      -- used in all MQTT push
+
 # port configuration - used to count inverters, chargers
 port                  = []
 inverters             = 0
