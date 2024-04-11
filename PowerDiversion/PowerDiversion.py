@@ -21,7 +21,7 @@ from configparser import ConfigParser
 import paho.mqtt.publish as publish
 import sys, os
 
-script_ver = "1.5.1_20240102"
+script_ver = "1.5.3_20240411"
 print("---Solar Diversion Power build:", script_ver)
 
 #********************************** subroutines **********************************
@@ -183,8 +183,8 @@ battery_voltage_array = []
 ac_out_pwr_array      = []
 ac_sell_pwr_array     = []
 divert_pwr_array      = []
-charger_60_PV_array   = []
-charger_80_PV_array   = []
+charger_1_PV_array   = []
+charger_2_PV_array   = []
 
 # MQTT push -- mirror GPIO initialization
 mqtt_push()
@@ -221,7 +221,8 @@ PushNotification("START: program ver:" + script_ver)
 
 while True:   
     try:
-        # start with reading json data        
+        # start with reading json data
+        time.sleep(0.2)
         if (time.time() - start_time) >10:                                        # try every 10 sec 
             start_time            = time.time() 
             read_file             = read_file+1
@@ -270,17 +271,17 @@ while True:
                 sell_current1     = 0
             if  chargers == 1:
                 pos = pos+1   
-                charger_60_mode   = data["devices"][pos]["charge_mode"]
-                charger_60_PV     = data["devices"][pos]["pv_voltage"]
-                charger_80_mode   = "none"
-                charger_80_PV     = 0
+                charger_1_mode   = data["devices"][pos]["charge_mode"]
+                charger_1_PV     = data["devices"][pos]["pv_voltage"]
+                charger_2_mode   = "none"
+                charger_2_PV     = 0
             if  chargers == 2:
                 pos=pos +1 
-                charger_60_mode   = data["devices"][pos]["charge_mode"]
-                charger_60_PV     = data["devices"][pos]["pv_voltage"]
+                charger_1_mode   = data["devices"][pos]["charge_mode"]
+                charger_1_PV     = data["devices"][pos]["pv_voltage"]
                 pos = pos +1
-                charger_80_mode   = data["devices"][pos]["charge_mode"]
-                charger_80_PV     = data["devices"][pos]["pv_voltage"]
+                charger_2_mode   = data["devices"][pos]["charge_mode"]
+                charger_2_PV     = data["devices"][pos]["pv_voltage"]
             
             pos=pos +1
             shunt_c               =-(data["devices"][pos]["shunt_c_current"])          # revert the negative value of shunt    
@@ -310,8 +311,8 @@ while True:
                 divert_pwr_array.append(divert_pwr)
                 ac_out_pwr_array.append(ac_out_pwr)
                 ac_sell_pwr_array.append(ac_sell_pwr)
-                charger_60_PV_array.append(charger_60_PV)
-                charger_80_PV_array.append(charger_80_PV)
+                charger_1_PV_array.append(charger_1_PV)
+                charger_2_PV_array.append(charger_2_PV)
 
                 # if boiler and boiler temp sensor exist, read boiler_temp
                 if boiler_temp_active == "true":
@@ -379,8 +380,8 @@ while True:
   
                 #GPIO block    
                 #activate power divert relay
-                if  operational_mode != "Sell" and deltatime < deltatime_ref and boiler_temp < boiler_temp_ref and battery_voltage > (voltage_ref_compens) and \
-                    (charger_60_mode==floating  or charger_80_mode==floating or charger_60_mode==absorbtion or charger_80_mode==absorbtion):
+                if  deltatime < deltatime_ref and boiler_temp < boiler_temp_ref and battery_voltage > (voltage_ref_compens) and \
+                    (charger_1_mode==floating  or charger_2_mode==floating or charger_1_mode==absorbtion or charger_2_mode==absorbtion):
                     divert = "active"
                 elif deltatime < deltatime_ref and boiler_temp > boiler_temp_ref:                  #protection for boiler overheating 
                     divert="inactive_hightemp"
@@ -467,16 +468,16 @@ while True:
                 divert_pwr_cor      = divert_pwr_avg - divert_pwr_std
                 ac_out_pwr_avg      = int(statistics.mean(ac_out_pwr_array))
                 ac_sell_pwr_avg     = int(statistics.mean(ac_sell_pwr_array))
-                charger_60_PV_avg   = int(statistics.mean(charger_60_PV_array))
-                charger_80_PV_avg   = int(statistics.mean(charger_80_PV_array))
-                chargers_PV_avg     = (charger_80_PV_avg + charger_60_PV_avg) / 2
+                charger_1_PV_avg   = int(statistics.mean(charger_1_PV_array))
+                charger_2_PV_avg   = int(statistics.mean(charger_2_PV_array))
+                chargers_PV_avg     = (charger_2_PV_avg + charger_1_PV_avg) / 2
 
                 
                 # GPIO block - load_03 control
                 if   ac_mode == grid_droped  and load_02 =="active" and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert_pwr_cor > divert_pwr_ref_03 :
                     load_03 = "active"
                 elif ac_mode == grid_droped  and load_02 =="active" and divert=="inactive_hightemp" and chargers_PV_avg > chargers_PV_ref and \
-                     (charger_60_mode==floating or charger_80_mode==floating or charger_60_mode==absorbtion or charger_80_mode==absorbtion):
+                     (charger_1_mode==floating or charger_2_mode==floating or charger_1_mode==absorbtion or charger_2_mode==absorbtion):
                     load_03 = "active"
                 elif ac_mode == grid_droped  and load_03 =="active" and battery_voltage_avg > voltage_ref_compens: 
                     load_03 = "active"
@@ -502,7 +503,7 @@ while True:
                 if ac_mode == grid_droped  and load_01 =="active" and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert_pwr_cor > divert_pwr_ref_02 :
                     load_02 = "active"
                 elif ac_mode == grid_droped  and load_01 =="active" and divert=="inactive_hightemp" and chargers_PV_avg > chargers_PV_ref and \
-                     (charger_60_mode==floating or charger_80_mode==floating or charger_60_mode==absorbtion or charger_80_mode==absorbtion):
+                     (charger_1_mode==floating or charger_2_mode==floating or charger_1_mode==absorbtion or charger_2_mode==absorbtion):
                     load_02 = "active"
                 elif ac_mode == grid_droped  and load_02 =="active" and battery_voltage_avg > voltage_ref_compens: 
                     load_02 = "active"
@@ -532,8 +533,8 @@ while True:
                 if ac_mode == grid_droped  and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert_pwr_cor > divert_pwr_ref_01: 
                     load_01 = "active"
                 elif ac_mode == grid_droped  and ac_out_pwr_avg < (max_ac_out_pwr-500) and divert=="inactive_hightemp" and chargers_PV_avg > chargers_PV_ref and \
-                     (charger_60_mode==floating or charger_80_mode==floating or charger_60_mode==absorbtion or charger_80_mode==absorbtion or\
-                      charger_60_mode==equalize or charger_80_mode==equalize):  
+                     (charger_1_mode==floating or charger_2_mode==floating or charger_1_mode==absorbtion or charger_2_mode==absorbtion or\
+                      charger_1_mode==equalize or charger_2_mode==equalize):  
                     load_01 = "active"
                 elif ac_mode == grid_droped  and load_01=="active" and battery_voltage_avg > voltage_ref_compens:                    
                     load_01 = "active"
@@ -574,8 +575,8 @@ while True:
                 print("ac_sell_pwr[W]:         ", ac_sell_pwr_avg)
                 print("divert_pwr[W]:          ", divert_pwr_avg,       " corrected[W]:",divert_pwr_cor)
                 print("boiler_temperature:     ", boiler_temp)
-                print("FM60Mode:               ", charger_60_mode,     " PV[V]:",charger_60_PV_avg)
-                print("FM80Mode:               ", charger_80_mode,     " PV[V]:",charger_80_PV_avg)
+                print("Charger1:               ", charger_1_mode,     " PV[V]:",charger_1_PV_avg)
+                print("Charger2:               ", charger_2_mode,     " PV[V]:",charger_2_PV_avg)
                 print("OperationalMode:        ", operational_mode)
                 print("grid:                   ", ac_mode)
                 print("ac_input_voltage:       ", ac_input_voltage)
@@ -600,8 +601,8 @@ while True:
                     file.write("ac_sell_pwr[W]:        " + str(ac_sell_pwr_avg)  +"\r\n")
                     file.write("divert_pwr[W]:         " + str(divert_pwr_avg)  + " [corrected]:" + str(divert_pwr_cor) + "\r\n")
                     file.write("boiler_temperature:    " + str(boiler_temp)     + "\r\n")
-                    file.write("FX60Mode:              " + str(charger_60_mode) + " PV [V]:"+ str(charger_60_PV_avg) + "\r\n")
-                    file.write("FX80Mode:              " + str(charger_80_mode) + " PV [V]:"+ str(charger_80_PV_avg) + "\r\n")
+                    file.write("FX60Mode:              " + str(charger_1_mode) + " PV [V]:"+ str(charger_1_PV_avg) + "\r\n")
+                    file.write("FX80Mode:              " + str(charger_2_mode) + " PV [V]:"+ str(charger_2_PV_avg) + "\r\n")
                     file.write("OperationalMode:       " + str(operational_mode)+ "\r\n")                              
                     file.write("grid:                  " + str(ac_mode) +"\r\n")
                     file.write("ac_input_voltage[V}:   " + str(ac_input_voltage)+ "\r\n")
@@ -622,8 +623,8 @@ while True:
                 ac_sell_pwr_array     = []
                 shunt_c_array         = []
                 battery_voltage_array = []
-                charger_60_PV_array   = []
-                charger_80_PV_array   = []
+                charger_1_PV_array   = []
+                charger_2_PV_array   = []
            
     #error treatment block
     except FileNotFoundError as e:
