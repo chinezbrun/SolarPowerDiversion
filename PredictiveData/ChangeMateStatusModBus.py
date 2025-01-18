@@ -2,13 +2,14 @@ import logging
 import json
 import time
 from datetime import datetime
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+#from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+from pymodbus.client import ModbusTcpClient as ModbusClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from configparser import ConfigParser
 import sys, os
 
-script_ver = "0.7.3_20240101"
+script_ver = "0.8.0_20250118"
 print ("script version   : "+ script_ver)
 
 curent_date_time  = datetime.now()
@@ -20,7 +21,8 @@ config                               = ConfigParser()
 config.read(working_dir + '/ChangeMateStatusModBus.cfg')
 
 output_path                           = config.get('Connectivity', 'output_path')
-print("output path      : " + output_path)
+if output_path == "": output_path = working_dir
+print ("output path      : " + output_path)
 
 mate3_ip                             = config.get('Connectivity', 'mate3_ip')
 mate3_modbus                         = config.get('Connectivity', 'mate3_modbus')
@@ -101,18 +103,22 @@ logging.getLogger(__name__)
 
 #error log subroutine
 def EventLog (event) :
-    try:
-        with open(output_path + "/data/general_info.log","r") as file:
-            save = file.read()
-        with open(output_path + "/data/general_info.log","w") as file:
-            file = open(output_path + "/data/general_info.log","a")
-            file.write(curent_date_time.strftime("%d/%m/%Y %H:%M:%S "))
-            file.write(event + "\n")
-        with open(output_path + "/data/general_info.log","a") as file:
-            file.write(save)
-        return
-    except Exception as e:
-        print("Error: CMS - EventLog " + str(e) )
+    if output_path != "none":
+        try:
+            if not os.path.isfile(output_path + "/general_info.log"):
+               with open(output_path + "/general_info.log","w") as file:
+                   file.write("\n")
+            with open(output_path + "/general_info.log","r") as file:
+                save = file.read()
+            with open(output_path + "/general_info.log","w") as file:
+                file = open(output_path + "/general_info.log","a")
+                file.write(curent_date_time.strftime("%d/%m/%Y %H:%M:%S "))
+                file.write(event + "\n")
+            with open(output_path + "/general_info.log","a") as file:
+                file.write(save)
+            return
+        except Exception as e:
+            print("Error: CMS - EventLog " + str(e) )
 
 # =================================== ModbusMate subroutines & variables =====================================
 # Define the dictionary mapping SUNSPEC DID's to Outback names
@@ -176,8 +182,8 @@ def get_common_block(basereg):
     length = 69
     response = client.read_holding_registers(basereg, length + 2)
     decoder = BinaryPayloadDecoder.fromRegisters(response.registers,
-                                                 byteorder=Endian.Big,
-                                                 wordorder=Endian.Big)
+                                                 byteorder=Endian.BIG,
+                                                 wordorder=Endian.BIG)
     return {
         'SunSpec_ID': decoder.decode_32bit_uint(),
         'SunSpec_DID': decoder.decode_16bit_uint(),
@@ -208,8 +214,8 @@ def getSunSpec(basereg):
     # There is a 16 bit string at basereg + 4 that contains Manufacturer
     response = client.read_holding_registers(basereg + 4, 16)
     decoder  = BinaryPayloadDecoder.fromRegisters(response.registers,
-                                                 byteorder=Endian.Big,
-                                                 wordorder=Endian.Big)
+                                                 byteorder=Endian.BIG,
+                                                 wordorder=Endian.BIG)
     manufacturer = decoder.decode_string(16)
     
     if "OUTBACK_POWER" in str(manufacturer.upper()):
@@ -510,7 +516,7 @@ start_run  = datetime.now() # used only for runtime calculation
 logging.info("Building MATE3 MODBUS connection")
 
 try:
-    client = ModbusClient(mate3_ip, mate3_modbus)
+    client = ModbusClient(mate3_ip, port=mate3_modbus)
     logging.info(".. Make sure we are indeed connected to an Outback power system")
     reg    = sunspec_start_reg
     size   = getSunSpec(reg)
