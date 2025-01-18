@@ -1,11 +1,3 @@
-# this scrip is used to change MATE 3 status based on arguments, wheather prediction, sesonality 
-# can run on Raspberry PI or Synology NAS or any other machine with Python 3.x env
-
-# dependencies : 
-# ChangeMateStatus.cfg - should be adapted accordingly
-# Python 3.x with required modules installed
-# MonitorMate for info display (not mandatory)
-
 version history
 -----------------
 0.2.0 20191001     - minor - update error reporting
@@ -32,3 +24,4 @@ version history
 0.7.1 20201224     - minor  - enhancements - list of valid argumentes changed for better integration with HA 
 0.7.2 20210123     - minor  - enhancements - cleaning, response time, speed up - config updated with "general" section
 0.7.3_20240101     - minor  - arguments correction GriedTied replaced with GridTied
+0.8.0_20250118     - major  - fix - pymodbus 3.7-3.8 compatibility
