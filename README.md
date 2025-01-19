@@ -52,6 +52,8 @@ This is the first add-on for PredictiveData and is meant to run API weather http
 7. Edit the PredictiveData/ChangeMateStatusModBus.cfg to your liking.
 8. Set a task in host computer to run PredictiveData/ChangeMateStatusModBus.py every day (preferably @ 21:30)
 
+## END OF SUPPORT AS OF 01.03.2025
+
 
 
 
